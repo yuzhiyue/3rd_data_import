@@ -23,6 +23,13 @@ func GetDBSession() *mgo.Session {
     return session
 }
 
+func SaveData(data []map[string]string)  {
+    for _, fields := range data {
+        mac := fields["MAC_ADDRESS"]
+        time := fields["CAPTURE_TIME"]
+        log.Println(mac,time)
+    }
+}
 
 
 
