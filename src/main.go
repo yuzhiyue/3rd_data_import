@@ -2,46 +2,81 @@ package main;
 
 import (
     "log"
-    "gopkg.in/mgo.v2"
     "data_file"
+    "fmt"
+    "io/ioutil"
+    "strings"
+    "os"
+    "time"
 )
 
-var session *mgo.Session;
+//var session *mgo.Session;
 
-func InitDB()  {
-    var err error
-    session, err = mgo.Dial("112.74.90.113:22522")
-    if err != nil {
-        panic(err)
-    }
-    session.SetMode(mgo.Monotonic, true)
-    log.Println("connect to db succ")
-}
-
-
-func GetDBSession() *mgo.Session {
-    return session
-}
+//func InitDB()  {
+//    var err error
+//    session, err = mgo.Dial("112.74.90.113:22522")
+//    if err != nil {
+//        panic(err)
+//    }
+//    session.SetMode(mgo.Monotonic, true)
+//    log.Println("connect to db succ")
+//}
+//
+//
+//func GetDBSession() *mgo.Session {
+//    return session
+//}
 
 func SaveData(data []map[string]string)  {
-    for _, fields := range data {
-        mac := fields["MAC_ADDRESS"]
-        time := fields["CAPTURE_TIME"]
-        log.Println(mac,time)
+    for i, fields := range data {
+        //mac := fields["PLACE_NAME"]
+        //time := fields["CAPTURE_TIME"]
+        //log.Println(mac,time)
+        fmt.Println("No.",i, " ")
+        for k,v := range fields {
+            fmt.Print(k, ":", v, ", ")
+        }
+        fmt.Println("")
+
     }
 }
 
-
-
+func ProcDir(dirPath string)  {
+    files := make([]string, 0)
+    dir, err := ioutil.ReadDir(dirPath)
+    if err != nil {
+        return
+    }
+    PthSep := string(os.PathSeparator)
+    for _, f := range dir {
+        if f.IsDir() {
+            continue
+        }
+        if strings.HasPrefix(f.Name(), "~") {
+            continue
+        }
+        files = append(files, dirPath + PthSep + f.Name())
+    }
+    for _, filePath := range files {
+        zipFile := data_file.DataFile{}
+        err := zipFile.Load(filePath)
+        if err != nil {
+            log.Println(err)
+            os.Remove(filePath)
+            continue
+        }
+        log.Println(zipFile.Fields)
+        SaveData(zipFile.Fields)
+        os.Remove(filePath)
+    }
+}
 
 func main() {
-    zipFile := data_file.DataFile{}
-    err := zipFile.Load("d:\\123-743218887-320500-320000-1435735991-00001.zip")
-    if err != nil {
-        log.Fatal(err)
+    dirPath := "e:\\1"
+    for {
+        ProcDir(dirPath)
+        time.Sleep(time.Second)
     }
-
-    log.Println(zipFile.Fields)
 
     //InitDB()
     //fileList, err := unzip("")
