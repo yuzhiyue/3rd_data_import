@@ -8,6 +8,8 @@ import (
     "os"
     "time"
     "gopkg.in/mgo.v2"
+    "gopkg.in/mgo.v2/bson"
+    "strconv"
 )
 
 var session *mgo.Session;
@@ -33,34 +35,64 @@ func PrintData(data []map[string]string)  {
     }
 }
 
+func filterMac(mac string) string {
+    return strings.ToLower(strings.Replace(strings.Replace(mac, "-", "", -1), ":", "", -1))
+}
+
 func UpdateApData(data []map[string]string)  {
+    c := GetDBSession().DB("detector").C("detector_info")
     for i, fields := range data {
         mac := fields["AP_MAC"]
-        lng := fields["LONGITUDE"]
-        lat := fields["LATITUDE"]
+        mac = filterMac(mac)
+        lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
+        lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
+        if err1 != nil || err2 != nil {
+            continue
+        }
         log.Println(i,": mac", mac, "lng", lng, "lat", lat)
+        //continue
+        c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()),"company":"02"})
     }
 }
 
 func SaveDeviceInfo(data []map[string]string)  {
+    c := GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
+        mac = filterMac(mac)
         ap_mac := fields["ACCESS_AP_MAC"]
+        ap_mac = filterMac(ap_mac)
         authType := fields["AUTH_TYPE"]
         authAccount := fields["AUTH_ACCOUNT"]
-        time := fields["START_TIME"]
+        time, err3 := strconv.Atoi(fields["START_TIME"])
+        if err3 != nil {
+            continue
+        }
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "auth_type", authType, "account", authAccount, "time", time)
+        //continue
+        if authType == "1020004" {
+            c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "time":uint32(time)})
+        }
     }
 }
 
 func SaveTraceInfo(data []map[string]string)  {
+    c := GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
+        mac = filterMac(mac)
         ap_mac := fields["ACCESS_AP_MAC"];
-        lng := fields["COLLECTION_EQUIPMENT_LONGITUDE"]
-        lat := fields["COLLECTION_EQUIPMENT_LATITUDE"]
-        time := fields["CAPTURE_TIME"]
+        ap_mac = filterMac(ap_mac)
+        lng, err1 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LONGITUDE"], 64)
+        lat, err2 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LATITUDE"], 64)
+        time, err3 := strconv.Atoi(fields["CAPTURE_TIME"])
+        if err1 != nil || err2 != nil || err3 != nil {
+            continue
+        }
+
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
+        //continue
+        c.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "time":uint32(time)})
     }
 }
 
@@ -104,7 +136,8 @@ func ProcDir(dirPath string)  {
 }
 
 func main() {
-    dirPath := "e:\\1"
+    InitDB()
+    dirPath := "d:\\1"
     for {
         ProcDir(dirPath)
         time.Sleep(time.Second)
