@@ -3,41 +3,64 @@ package main;
 import (
     "log"
     "data_file"
-    "fmt"
     "io/ioutil"
     "strings"
     "os"
     "time"
+    "gopkg.in/mgo.v2"
 )
 
-//var session *mgo.Session;
+var session *mgo.Session;
 
-//func InitDB()  {
-//    var err error
-//    session, err = mgo.Dial("112.74.90.113:22522")
-//    if err != nil {
-//        panic(err)
-//    }
-//    session.SetMode(mgo.Monotonic, true)
-//    log.Println("connect to db succ")
-//}
-//
-//
-//func GetDBSession() *mgo.Session {
-//    return session
-//}
+func InitDB()  {
+    var err error
+    session, err = mgo.Dial("112.74.90.113:22522")
+    if err != nil {
+        panic(err)
+    }
+    session.SetMode(mgo.Monotonic, true)
+    log.Println("connect to db succ")
+}
 
-func SaveData(data []map[string]string)  {
+
+func GetDBSession() *mgo.Session {
+    return session
+}
+
+func PrintData(data []map[string]string)  {
     for i, fields := range data {
-        //mac := fields["PLACE_NAME"]
-        //time := fields["CAPTURE_TIME"]
-        //log.Println(mac,time)
-        fmt.Println("No.",i, " ")
-        for k,v := range fields {
-            fmt.Print(k, ":", v, ", ")
-        }
-        fmt.Println("")
+        log.Println(i, fields)
+    }
+}
 
+func UpdateApData(data []map[string]string)  {
+    for i, fields := range data {
+        mac := fields["AP_MAC"]
+        lng := fields["LONGITUDE"]
+        lat := fields["LATITUDE"]
+        log.Println(i,": mac", mac, "lng", lng, "lat", lat)
+    }
+}
+
+func SaveDeviceInfo(data []map[string]string)  {
+    for i, fields := range data {
+        mac := fields["MAC"]
+        ap_mac := fields["ACCESS_AP_MAC"]
+        authType := fields["AUTH_TYPE"]
+        authAccount := fields["AUTH_ACCOUNT"]
+        time := fields["START_TIME"]
+        log.Println(i,": mac", mac, "ap_mac", ap_mac, "auth_type", authType, "account", authAccount, "time", time)
+    }
+}
+
+func SaveTraceInfo(data []map[string]string)  {
+    for i, fields := range data {
+        mac := fields["MAC"]
+        ap_mac := fields["ACCESS_AP_MAC"];
+        lng := fields["COLLECTION_EQUIPMENT_LONGITUDE"]
+        lat := fields["COLLECTION_EQUIPMENT_LATITUDE"]
+        time := fields["CAPTURE_TIME"]
+        log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
     }
 }
 
@@ -66,7 +89,16 @@ func ProcDir(dirPath string)  {
             continue
         }
         log.Println(zipFile.Fields)
-        SaveData(zipFile.Fields)
+        if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
+            UpdateApData(zipFile.Fields)
+        } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
+            SaveTraceInfo(zipFile.Fields)
+        } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
+            SaveDeviceInfo(zipFile.Fields)
+        } else {
+            PrintData(zipFile.Fields)
+        }
+
         os.Remove(filePath)
     }
 }

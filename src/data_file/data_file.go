@@ -7,6 +7,7 @@ import (
     "archive/zip"
     "io/ioutil"
     "strings"
+    "errors"
 )
 
 type Item struct {
@@ -74,7 +75,9 @@ func (self *DataFile)Load(path string) error {
     if err != nil {
         return err
     }
-
+    if self.Meta.FileName != DataFile.FileHeader.Name {
+        return errors.New("file name mismatch")
+    }
     fileData, err := DataFile.Open()
     defer fileData.Close()
     if err != nil {
@@ -91,7 +94,7 @@ func (self *DataFile)Load(path string) error {
         fieldIdx := 0
         fields := make(map[string] string)
         for i, c := range line {
-            if int(c) == int('\t'){
+            if int(c) == int('\t') || i == len(line) - 1{
                 if inWord {
                     val := line[fieldStart: i]
                     name := self.Meta.Fields[fieldIdx]
@@ -106,7 +109,9 @@ func (self *DataFile)Load(path string) error {
                 }
             }
         }
-        self.Fields = append(self.Fields, fields)
+        if len(fields) != 0 {
+            self.Fields = append(self.Fields, fields)
+        }
     }
     return nil
 }
