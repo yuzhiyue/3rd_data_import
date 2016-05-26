@@ -107,7 +107,7 @@ func ProcDir(dirPath string)  {
         if f.IsDir() {
             continue
         }
-        if strings.HasPrefix(f.Name(), "~") {
+        if !strings.HasSuffix(f.Name(), ".zip") {
             continue
         }
         if time.Now().Unix() - f.ModTime().Unix() < 60{
