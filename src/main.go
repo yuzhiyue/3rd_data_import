@@ -16,7 +16,7 @@ var session *mgo.Session;
 
 func InitDB()  {
     var err error
-    session, err = mgo.Dial("112.74.90.113:22522")
+    session, err = mgo.Dial("127.0.0.1:22522")
     if err != nil {
         panic(err)
     }
@@ -60,7 +60,7 @@ func SaveDeviceInfo(data []map[string]string)  {
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
-        ap_mac := fields["ACCESS_AP_MAC"]
+        ap_mac := fields["AP_MAC"]
         ap_mac = filterMac(ap_mac)
         authType := fields["AUTH_TYPE"]
         authAccount := fields["AUTH_ACCOUNT"]
@@ -77,11 +77,11 @@ func SaveDeviceInfo(data []map[string]string)  {
 }
 
 func SaveTraceInfo(data []map[string]string)  {
-    c := GetDBSession().DB("person_info").C("mac")
+    c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
-        ap_mac := fields["ACCESS_AP_MAC"];
+        ap_mac := fields["AP_MAC"];
         ap_mac = filterMac(ap_mac)
         lng, err1 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LATITUDE"], 64)
@@ -110,6 +110,9 @@ func ProcDir(dirPath string)  {
         if strings.HasPrefix(f.Name(), "~") {
             continue
         }
+        if time.Now().Unix() - f.ModTime().Unix() < 60{
+            continue
+        }
         files = append(files, dirPath + PthSep + f.Name())
     }
     for _, filePath := range files {
@@ -136,12 +139,18 @@ func ProcDir(dirPath string)  {
 }
 
 func main() {
-    InitDB()
-    dirPath := "d:\\1"
-    for {
-        ProcDir(dirPath)
-        time.Sleep(time.Second)
+    if len(os.Args) == 2 {
+        InitDB()
+        log.Println("read dir", os.Args[1])
+        dirPath := os.Args[1]
+        //for {
+        {
+            ProcDir(dirPath)
+            //time.Sleep(time.Second)
+        }
+        return
     }
+
 
     //InitDB()
     //fileList, err := unzip("")
