@@ -10,9 +10,47 @@ import (
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "strconv"
+    "gopkg.in/olivere/elastic.v3"
 )
 
-var session *mgo.Session;
+var session *mgo.Session
+var es_client *elastic.Client
+
+func InitES() {
+    var err error
+    es_client, err = elastic.NewClient(elastic.SetURL("http://120.24.7.62:9200"))
+    if err != nil {
+        // Handle error
+        panic(err)
+    }
+}
+
+func InitIndex()  {
+    exists, err := es_client.IndexExists("detector").Do()
+    if err != nil {
+        // Handle error
+        panic(err)
+    }
+    if !exists {
+        createIndex, err := es_client.CreateIndex("detector").BodyString(`{
+            "settings":{
+            "number_of_shards":16,
+            "number_of_replicas":1
+            }}`).Do()
+        if err != nil {
+            // Handle error
+            panic(err)
+        }
+        if !createIndex.Acknowledged {
+            // Not acknowledged
+        }
+    }
+}
+
+func ESSaveTraceInfo(doc bson.M)  {
+    es_client.Index().Index("detector").Type("report_info").
+    BodyJson(doc).Do()
+}
 
 func InitDB()  {
     var err error
@@ -93,6 +131,7 @@ func SaveTraceInfo(data []map[string]string)  {
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
         //continue
         c.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "time":uint32(time)})
+        ESSaveTraceInfo(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "time":uint32(time)})
     }
 }
 
@@ -141,6 +180,8 @@ func ProcDir(dirPath string)  {
 func main() {
     if len(os.Args) == 2 {
         InitDB()
+        InitES()
+        InitIndex()
         log.Println("read dir", os.Args[1])
         dirPath := os.Args[1]
         //for {
