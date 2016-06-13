@@ -80,6 +80,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
 }
 
 func SaveTraceInfo(orgcode string, data []map[string]string)  {
+    log.Println("SaveTraceInfo")
     c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
         mac := fields["MAC"]
@@ -121,6 +122,7 @@ func ProcDir(dirPath string)  {
         files = append(files, f.Name())
     }
     for _, fileName := range files {
+        log.Println("start proc", fileName)
         filePath := dirPath + PthSep + fileName
         zipFile := data_file.DataFile{}
         err := zipFile.Load(filePath)
@@ -136,7 +138,7 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
-        log.Println(zipFile.Fields)
+        log.Println("parse", fileName, orgCode)
         if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
             UpdateApData(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
@@ -154,7 +156,18 @@ func ProcDir(dirPath string)  {
 var saveToDB = true
 var dirPath = ""
 var loopCount = 1
+var openLogFile = true
 func main() {
+    log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+    if openLogFile {
+        logFile, logErr := os.OpenFile("/home/detector/3rd_data_import/3rd_data_import.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+        if logErr != nil {
+            log.Println("Fail to find", "/home/detector/3rd_data_import/3rd_data_import.log", "Server start Failed")
+            os.Exit(1)
+        }
+        log.SetOutput(logFile)
+    }
+
     if saveToDB {
         InitDB()
     }
