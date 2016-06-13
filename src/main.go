@@ -149,7 +149,7 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
-        log.Println("parse", fileName, orgCode)
+        log.Println("parse", zipFile.Meta.FileName, orgCode)
         if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
             UpdateApData(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
