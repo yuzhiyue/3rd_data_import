@@ -16,7 +16,7 @@ var session *mgo.Session;
 
 func InitDB()  {
     var err error
-    session, err = mgo.Dial("127.0.0.1:22522")
+    session, err = mgo.Dial("112.74.90.113:22522")
     if err != nil {
         panic(err)
     }
@@ -166,10 +166,10 @@ func ProcDir(dirPath string)  {
     }
 }
 
-var saveToDB = false
-var dirPath = "d:\\test_data"
+var saveToDB = true
+var dirPath = ""
 var loopCount = 1
-var openLogFile = false
+var openLogFile = true
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
