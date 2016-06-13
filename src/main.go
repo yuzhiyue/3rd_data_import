@@ -102,6 +102,17 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
     }
 }
 
+func SaveLog(orgcode string, data []map[string]string)  {
+    log.Println("SaveLog")
+    c := GetDBSession().DB("person_info").C("log")
+    for i, fields := range data {
+        log.Println(i,fields)
+        if saveToDB {
+            c.Insert(fields)
+        }
+    }
+}
+
 func ProcDir(dirPath string)  {
     files := make([]string, 0)
     dir, err := ioutil.ReadDir(dirPath)
@@ -145,6 +156,8 @@ func ProcDir(dirPath string)  {
             SaveTraceInfo(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
             SaveDeviceInfo(orgCode, zipFile.Fields)
+        }else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
+            SaveLog(orgCode, zipFile.Fields)
         } else {
             PrintData(zipFile.Fields)
         }
@@ -153,10 +166,10 @@ func ProcDir(dirPath string)  {
     }
 }
 
-var saveToDB = true
-var dirPath = ""
+var saveToDB = false
+var dirPath = "d:\\test_data"
 var loopCount = 1
-var openLogFile = true
+var openLogFile = false
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
