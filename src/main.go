@@ -39,7 +39,7 @@ func filterMac(mac string) string {
     return strings.ToLower(strings.Replace(strings.Replace(mac, "-", "", -1), ":", "", -1))
 }
 
-func UpdateApData(data []map[string]string)  {
+func UpdateApData(orgcode string, data []map[string]string)  {
     c := GetDBSession().DB("detector").C("detector_info")
     for i, fields := range data {
         mac := fields["AP_MAC"]
@@ -50,12 +50,13 @@ func UpdateApData(data []map[string]string)  {
             continue
         }
         log.Println(i,": mac", mac, "lng", lng, "lat", lat)
-        //continue
-        c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()),"company":"02"})
+        if saveToDB {
+            c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()), "company":"02", "org_code":orgcode})
+        }
     }
 }
 
-func SaveDeviceInfo(data []map[string]string)  {
+func SaveDeviceInfo(orgcode string, data []map[string]string)  {
     c := GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
@@ -69,14 +70,16 @@ func SaveDeviceInfo(data []map[string]string)  {
             continue
         }
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "auth_type", authType, "account", authAccount, "time", time)
-        //continue
-        if authType == "1020004" {
-            c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "time":uint32(time)})
+
+        if saveToDB {
+            if authType == "1020004" {
+                c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+            }
         }
     }
 }
 
-func SaveTraceInfo(data []map[string]string)  {
+func SaveTraceInfo(orgcode string, data []map[string]string)  {
     c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
         mac := fields["MAC"]
@@ -91,8 +94,10 @@ func SaveTraceInfo(data []map[string]string)  {
         }
 
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
-        //continue
-        c.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "time":uint32(time)})
+
+        if saveToDB {
+            c.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
+        }
     }
 }
 
@@ -113,9 +118,10 @@ func ProcDir(dirPath string)  {
         if time.Now().Unix() - f.ModTime().Unix() < 60{
             continue
         }
-        files = append(files, dirPath + PthSep + f.Name())
+        files = append(files, f.Name())
     }
-    for _, filePath := range files {
+    for _, fileName := range files {
+        filePath := dirPath + PthSep + fileName
         zipFile := data_file.DataFile{}
         err := zipFile.Load(filePath)
         if err != nil {
@@ -123,13 +129,20 @@ func ProcDir(dirPath string)  {
             os.Remove(filePath)
             continue
         }
+        fileNameSplited := strings.Split(fileName, "-")
+        if len(fileNameSplited) < 2 {
+            log.Println("fileNameSplited len < 2", fileName)
+            os.Remove(filePath)
+            continue
+        }
+        orgCode := fileNameSplited[1]
         log.Println(zipFile.Fields)
         if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
-            UpdateApData(zipFile.Fields)
+            UpdateApData(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
-            SaveTraceInfo(zipFile.Fields)
+            SaveTraceInfo(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
-            SaveDeviceInfo(zipFile.Fields)
+            SaveDeviceInfo(orgCode, zipFile.Fields)
         } else {
             PrintData(zipFile.Fields)
         }
@@ -138,35 +151,25 @@ func ProcDir(dirPath string)  {
     }
 }
 
+var saveToDB = true
+var dirPath = ""
+var loopCount = 1
 func main() {
-    if len(os.Args) == 2 {
+    if saveToDB {
         InitDB()
-        log.Println("read dir", os.Args[1])
-        dirPath := os.Args[1]
-        //for {
-        {
-            ProcDir(dirPath)
-            //time.Sleep(time.Second)
+    }
+    if dirPath == "" {
+        if len(os.Args) == 2 {
+            dirPath = os.Args[1]
+        } else {
+            return;
         }
-        return
     }
 
+    log.Println("read dir", dirPath)
 
-    //InitDB()
-    //fileList, err := unzip("")
-    //if err != nil {
-    //    log.Println("unzip err,", err)
-    //    return
-    //}
-    //for _, xmlContent := range fileList{
-    //    xmlInfo := XmlMeta{}
-    //    err = xml.Unmarshal(xmlContent, &xmlInfo)
-    //    if err != nil {
-    //        log.Println("parse xml err,", err)
-    //        continue
-    //    }
-    //    log.Println(xmlInfo)
-    //    xmlInfo.save()
-    //}
-
+    for i := 0; i < loopCount; i++{
+            ProcDir(dirPath)
+            time.Sleep(time.Second)
+    }
 }
