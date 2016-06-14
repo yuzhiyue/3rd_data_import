@@ -83,6 +83,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
     c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
+        log.Println(fields)
         mac := fields["MAC"]
         mac = filterMac(mac)
         ap_mac := fields["AP_MAC"];
