@@ -83,10 +83,10 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
     c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
-        log.Println(fields)
+        //log.Println(fields)
         mac := fields["MAC"]
         mac = filterMac(mac)
-        ap_mac := fields["AP_MAC"];
+        ap_mac := fields["ACCESS_AP_MAC"];
         ap_mac = filterMac(ap_mac)
         lng, err1 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["COLLECTION_EQUIPMENT_LATITUDE"], 64)
