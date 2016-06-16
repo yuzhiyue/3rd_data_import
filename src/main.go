@@ -116,7 +116,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
 
 func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     log.Println("SaveLog")
-    c := GetDBSession().DB("person_info").C("log")
+    c := GetDBSession().DB("person_info").C("behavior_log")
     for i, fields := range data {
         log.Println(i,fields)
         mac := fields["MAC"]
