@@ -10,7 +10,18 @@ import (
     "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "strconv"
+    "net"
 )
+
+func inet_ntoa(ipnr int64) string {
+    var bytes [4]byte
+    bytes[0] = byte(ipnr & 0xFF)
+    bytes[1] = byte((ipnr >> 8) & 0xFF)
+    bytes[2] = byte((ipnr >> 16) & 0xFF)
+    bytes[3] = byte((ipnr >> 24) & 0xFF)
+
+    return net.IPv4(bytes[3],bytes[2],bytes[1],bytes[0]).String()
+}
 
 var session *mgo.Session;
 
@@ -103,13 +114,25 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
     }
 }
 
-func SaveLog(orgcode string, data []map[string]string)  {
+func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     log.Println("SaveLog")
     c := GetDBSession().DB("person_info").C("log")
     for i, fields := range data {
         log.Println(i,fields)
+        mac := fields["MAC"]
+        mac = filterMac(mac)
+        IpInt, err4 := strconv.ParseInt(fields["DST_IP"], 10, 64)
+        Ip := inet_ntoa(IpInt)
+        port := fields["DST_PORT"]
+        lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
+        lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
+        time, err3 := strconv.Atoi(fields["CAPTURE_TIME"])
+        if err1 != nil || err2 != nil || err3 != nil || err4 == nil{
+            continue
+        }
         if saveToDB {
-            c.Insert(fields)
+            //c.Insert(fields)
+            c.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
         }
     }
 }
@@ -158,7 +181,7 @@ func ProcDir(dirPath string)  {
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
             SaveDeviceInfo(orgCode, zipFile.Fields)
         }else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
-            SaveLog(orgCode, zipFile.Fields)
+            SaveBehaviorLog(orgCode, zipFile.Fields)
         } else {
             PrintData(zipFile.Fields)
         }
