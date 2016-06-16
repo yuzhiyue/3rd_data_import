@@ -128,6 +128,7 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
         time, err3 := strconv.Atoi(fields["CAPTURE_TIME"])
         if err1 != nil || err2 != nil || err3 != nil || err4 == nil{
+            log.Println("error:", err1, err2, err3, err4)
             continue
         }
         if saveToDB {
