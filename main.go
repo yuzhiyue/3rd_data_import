@@ -2,7 +2,6 @@ package main;
 
 import (
     "log"
-    "data_file"
     "io/ioutil"
     "strings"
     "os"
@@ -11,6 +10,7 @@ import (
     "gopkg.in/mgo.v2/bson"
     "strconv"
     "net"
+    "3rd_data_import/data_file"
 )
 
 func inet_ntoa(ipnr int64) string {
