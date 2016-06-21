@@ -198,9 +198,9 @@ var openLogFile = true
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
-        logFile, logErr := os.OpenFile("/home/detector/3rd_data_import/3rd_data_import.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+        logFile, logErr := os.OpenFile("/home/detector/gopath/src/3rd_data_import/3rd_data_import.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
         if logErr != nil {
-            log.Println("Fail to find", "/home/detector/3rd_data_import/3rd_data_import.log", "Server start Failed")
+            log.Println("Fail to find", "/home/detector/gopath/src/3rd_data_import/3rd_data_import.log", "Server start Failed")
             os.Exit(1)
         }
         log.SetOutput(logFile)
