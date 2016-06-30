@@ -60,6 +60,7 @@ func UpdateApData(orgcode string, data []map[string]string)  {
         if err1 != nil || err2 != nil {
             continue
         }
+        lng, lat = data_file.Bd09towgs84(lng, lat)
         log.Println(i,": mac", mac, "lng", lng, "lat", lat)
         if saveToDB {
             c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()), "company":"02", "org_code":orgcode})
@@ -105,7 +106,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
         if err1 != nil || err2 != nil || err3 != nil {
             continue
         }
-
+        lng, lat = data_file.Bd09towgs84(lng, lat)
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
 
         if saveToDB {
@@ -131,6 +132,7 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
             log.Println("error:", err1, err2, err3, err4)
             continue
         }
+        lng, lat = data_file.Bd09towgs84(lng, lat)
         if saveToDB {
             //c.Insert(fields)
             c.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
@@ -191,6 +193,39 @@ func ProcDir(dirPath string)  {
     }
 }
 
+func GetNumber(m bson.M, key string) float64 {
+    v := m[key]
+    if v == nil {
+        return 0
+    }
+    switch v.(type) {
+    case float64:
+        return v.(float64)
+    case float32:
+        return float64(v.(float32))
+    case int:
+        return float64(v.(int))
+    }
+    return 0
+}
+
+func ConvertGeo()  {
+    c := GetDBSession().DB("detector").C("detector_report")
+    c2 := GetDBSession().Copy().DB("detector").C("detector_report");
+    query := c.Find(bson.M{"org_code":"555400905"})
+    iter := query.Iter()
+    e := bson.M{}
+    for iter.Next(&e) {
+        id,_ := e["_id"]
+        idStr := id.(bson.ObjectId)
+        log.Println(idStr)
+        lng := GetNumber(e, "longitude")
+        lat := GetNumber(e, "latitude")
+        lng, lat = data_file.Bd09towgs84(lng, lat)
+        c2.UpdateId(e["_id"], bson.M{"$set":bson.M{"longitude":lng, "latitude":lat}})
+    }
+}
+
 var saveToDB = true
 var dirPath = ""
 var loopCount = 1
@@ -208,6 +243,8 @@ func main() {
 
     if saveToDB {
         InitDB()
+        ConvertGeo()
+        return;
     }
     if dirPath == "" {
         if len(os.Args) == 2 {
