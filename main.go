@@ -243,8 +243,6 @@ func main() {
 
     if saveToDB {
         InitDB()
-        ConvertGeo()
-        return;
     }
     if dirPath == "" {
         if len(os.Args) == 2 {
