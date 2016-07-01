@@ -11,6 +11,7 @@ import (
     "strconv"
     "net"
     "3rd_data_import/data_file"
+    "unicode"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -68,6 +69,19 @@ func UpdateApData(orgcode string, data []map[string]string)  {
     }
 }
 
+func isPhoneNo(value string) bool {
+    if len(value) == 11 && strings.HasPrefix(value, "1") {
+        for _, v := range []rune(value) {
+            if !unicode.IsDigit(v) {
+                return false
+            }
+        }
+        return true
+    } else {
+        return false
+    }
+}
+
 func SaveDeviceInfo(orgcode string, data []map[string]string)  {
     c := GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
@@ -86,6 +100,10 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
         if saveToDB {
             if authType == "1020004" {
                 c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+            } else if authType == "1029999" {
+                if isPhoneNo(authAccount) {
+                    c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+                }
             }
         }
     }
