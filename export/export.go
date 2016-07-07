@@ -10,16 +10,16 @@ import (
 )
 
 type DetectorDBInfo struct {
-    mac string `bson:"_id"`
-    longitude float64
-    latitude float64
-    last_active_time uint32
+    Mac string `bson:"_id"`
+    Longitude float64 `bson:"longitude"`
+    Latitude float64 `bson:"latitude"`
+    Last_active_time uint32 `bson:"last_active_time"`
 }
 
 type DetectorInfo struct {
     EQUIPMENT_NUM string
     EQUIPMENT_NAME string
-    MAC string `json:"mac"`
+    MAC string
     SECURITY_FACTORY_ORGCODE string
     SERVICE_CODE  string
     PROVINCE_CODE  string
@@ -49,22 +49,22 @@ func ExportDetectorInfo() {
     }
     outArr := make([]DetectorInfo, 0)
     for _, e := range detectorArr {
-        if len(e.mac) < 12 {
+        if len(e.Mac) < 12 {
             continue
         }
         var detector DetectorInfo
-        detector.MAC = strings.ToUpper(e.mac[:12])
+        detector.MAC = strings.ToUpper(e.Mac[:12])
         detector.MAC = detector.MAC[0:2] + "-" + detector.MAC[2:4] + "-" + detector.MAC[4:6] + "-" + detector.MAC[6:8] + "-" + detector.MAC[8:10] + "-" + detector.MAC[10:12]
-        detector.EQUIPMENT_NUM = "000000000" + strings.ToUpper(e.mac[:12])
-        detector.EQUIPMENT_NAME = e.mac
+        detector.EQUIPMENT_NUM = "000000000" + strings.ToUpper(e.Mac[:12])
+        detector.EQUIPMENT_NAME = e.Mac
         detector.SECURITY_FACTORY_ORGCODE = "000000000"
         detector.SERVICE_CODE = "00000000000000"
         detector.PROVINCE_CODE = "000000"
         detector.CITY_CODE = "000000"
         detector.AREA_CODE = "000000"
         detector.EQUIPMENT_TYPE = "00"
-        detector.LATITUDE = strconv.FormatFloat(e.latitude, 'f', 6, 64)
-        detector.LONGITUDE = strconv.FormatFloat(e.longitude, 'f', 6, 64)
+        detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
+        detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
         detector.CREATE_TIME = "2016-07-01 12:32:00"
         outArr = append(outArr, detector)
     }
