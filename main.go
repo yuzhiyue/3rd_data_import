@@ -6,12 +6,13 @@ import (
     "strings"
     "os"
     "time"
-    "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "strconv"
     "net"
     "3rd_data_import/data_file"
     "unicode"
+    "3rd_data_import/db"
+    "3rd_data_import/export"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -22,23 +23,6 @@ func inet_ntoa(ipnr int64) string {
     bytes[3] = byte((ipnr >> 24) & 0xFF)
 
     return net.IPv4(bytes[3],bytes[2],bytes[1],bytes[0]).String()
-}
-
-var session *mgo.Session;
-
-func InitDB()  {
-    var err error
-    session, err = mgo.Dial("112.74.90.113:22522")
-    if err != nil {
-        panic(err)
-    }
-    session.SetMode(mgo.Monotonic, true)
-    log.Println("connect to db succ")
-}
-
-
-func GetDBSession() *mgo.Session {
-    return session
 }
 
 func PrintData(data []map[string]string)  {
@@ -52,7 +36,7 @@ func filterMac(mac string) string {
 }
 
 func UpdateApData(orgcode string, data []map[string]string)  {
-    c := GetDBSession().DB("detector").C("detector_info")
+    c := db.GetDBSession().DB("detector").C("detector_info")
     for i, fields := range data {
         mac := fields["AP_MAC"]
         mac = filterMac(mac)
@@ -83,7 +67,7 @@ func isPhoneNo(value string) bool {
 }
 
 func SaveDeviceInfo(orgcode string, data []map[string]string)  {
-    c := GetDBSession().DB("person_info").C("mac")
+    c := db.GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
@@ -111,7 +95,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
 
 func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
-    c := GetDBSession().DB("detector").C("detector_report")
+    c := db.GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
         //log.Println(fields)
         mac := fields["MAC"]
@@ -135,7 +119,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
 
 func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     log.Println("SaveLog")
-    c := GetDBSession().DB("person_info").C("behavior_log")
+    c := db.GetDBSession().DB("person_info").C("behavior_log")
     for i, fields := range data {
         log.Println(i,fields)
         mac := fields["MAC"]
@@ -229,8 +213,8 @@ func GetNumber(m bson.M, key string) float64 {
 }
 
 func ConvertGeo()  {
-    c := GetDBSession().DB("detector").C("detector_report")
-    c2 := GetDBSession().Copy().DB("detector").C("detector_report");
+    c := db.GetDBSession().DB("detector").C("detector_report")
+    c2 := db.GetDBSession().Copy().DB("detector").C("detector_report");
     query := c.Find(bson.M{"org_code":"555400905"})
     iter := query.Iter()
     e := bson.M{}
@@ -248,7 +232,7 @@ func ConvertGeo()  {
 var saveToDB = true
 var dirPath = ""
 var loopCount = 1
-var openLogFile = true
+var openLogFile = false
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
@@ -261,7 +245,9 @@ func main() {
     }
 
     if saveToDB {
-        InitDB()
+        db.InitDB()
+        export.ExportDetectorInfo()
+        return
     }
     if dirPath == "" {
         if len(os.Args) == 2 {
