@@ -48,11 +48,11 @@ type DataFile struct {
 
 func (self *DataFile)Load(path string) error {
     unzip_file, err := zip.OpenReader(path)
-    defer unzip_file.Close()
     if err != nil {
+        log.Println("openzip err:", err)
         return nil
     }
-
+    defer unzip_file.Close()
     var xmlFile *zip.File
     var DataFile *zip.File
     for _, f := range unzip_file.File {
