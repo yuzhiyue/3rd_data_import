@@ -195,6 +195,7 @@ func ProcDir(dirPath string)  {
         }
         orgCode := fileNameSplited[1]
         log.Println("parse", zipFile.Meta.FileName, orgCode)
+        PrintData(zipFile.Fields)
         if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
             UpdateApData(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
@@ -204,7 +205,7 @@ func ProcDir(dirPath string)  {
         }else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
             SaveBehaviorLog(orgCode, zipFile.Fields)
         } else {
-            PrintData(zipFile.Fields)
+
         }
 
         os.Remove(filePath)
