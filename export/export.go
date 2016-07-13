@@ -20,6 +20,14 @@ type DetectorDBInfo struct {
     Last_active_time uint32 `bson:"last_active_time"`
 }
 
+type TraceDBInfo struct {
+    ApMac string `bson:"ap_mac"`
+    DeviceMac string `bson:"device_mac"`
+    Longitude float64 `bson:"longitude"`
+    Latitude float64 `bson:"latitude"`
+    Time uint32 `bson:"time"`
+}
+
 type DetectorInfo struct {
     EQUIPMENT_NUM string
     EQUIPMENT_NAME string
@@ -35,12 +43,13 @@ type DetectorInfo struct {
     CREATE_TIME string
 }
 
-type DetectorInfoArr struct {
-    LIST []DetectorInfo
-}
-
 var OrgCode string = "589504630"
 var OutPath = "d:/out"
+
+func FormatMac(mac string ) string {
+    return strings.ToUpper(mac[0:2] + "-" + mac[2:4] + "-" + mac[4:6] + "-" + mac[6:8] + "-" + mac[8:10] + "-" + mac[10:12])
+}
+
 func ExportDetectorInfo() {
     session := db.GetDBSession()
     detectorArr := make([]DetectorDBInfo, 0)
@@ -57,8 +66,7 @@ func ExportDetectorInfo() {
 
         Mac := strings.ToUpper(e.Mac[len(e.Mac) - 12:])
         var detector DetectorInfo
-        detector.MAC = strings.ToUpper(e.Mac)
-        detector.MAC = Mac[0:2] + "-" + Mac[2:4] + "-" + Mac[4:6] + "-" + Mac[6:8] + "-" + Mac[8:10] + "-" + Mac[10:12]
+        detector.MAC = FormatMac(Mac)
         detector.EQUIPMENT_NUM = OrgCode + Mac
         detector.EQUIPMENT_NAME = e.Mac
         detector.SECURITY_FACTORY_ORGCODE = OrgCode
@@ -72,14 +80,26 @@ func ExportDetectorInfo() {
         detector.CREATE_TIME = "2016-07-01 12:32:00"
         outArr = append(outArr, detector)
     }
-    arr := DetectorInfoArr{}
-    arr.LIST = outArr
+
     jsonString, err := json.Marshal(outArr)
     if err != nil {
         return
     }
     log.Print(string(jsonString))
     SaveFile(string(jsonString), "010")
+}
+
+func ExportTrace() {
+    session := db.GetDBSession()
+    traceArr := make([]TraceDBInfo, 0)
+    err := session.DB("detector").C("detector_report").Find(bson.M{"company":"01"}).Sort("-time").Limit(1000).All(&traceArr)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+    for _, e := range traceArr {
+
+    }
 }
 
 func SaveFile(content string, typeCode string) {
