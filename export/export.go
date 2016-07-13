@@ -13,6 +13,21 @@ import (
     "fmt"
 )
 
+type ServiceInfo struct {
+    SERVICE_CODE string
+    SERVICE_NAME string
+    BUSINESS_NATURE string
+    STATUS int
+    SERVICE_TYPE int
+    PROVINCE_CODE string
+    CITY_CODE string
+    AREA_CODE string
+    XPOINT string
+    YPOINT string
+    CREATE_TIME string
+    CAP_TYPE string
+}
+
 type DetectorDBInfo struct {
     Mac string `bson:"_id"`
     Longitude float64 `bson:"longitude"`
@@ -43,11 +58,47 @@ type DetectorInfo struct {
     CREATE_TIME string
 }
 
+type TraceInfo struct {
+    MAC string
+    TYPE uint32
+    START_TIME uint32
+    BSSID string
+    XPOINT string
+    YPOINT string
+    DEVMAC string
+    DEVICENUM string
+    SERVICECODE string
+}
+
 var OrgCode string = "589504630"
 var OutPath = "d:/out"
-
+var ServiceCode = "441421" + "39" + "000001"
 func FormatMac(mac string ) string {
     return strings.ToUpper(mac[0:2] + "-" + mac[2:4] + "-" + mac[4:6] + "-" + mac[6:8] + "-" + mac[8:10] + "-" + mac[10:12])
+}
+
+func ExportService() {
+    outArr := make([]ServiceInfo, 0)
+    var serviceInfo ServiceInfo
+    serviceInfo.SERVICE_CODE = ServiceCode
+    serviceInfo.SERVICE_NAME = "梅州市WIFI采集"
+    serviceInfo.BUSINESS_NATURE = "3"
+    serviceInfo.STATUS = 1
+    serviceInfo.SERVICE_TYPE = 9
+    serviceInfo.PROVINCE_CODE = "44"
+    serviceInfo.CITY_CODE = "441400"
+    serviceInfo.AREA_CODE = "441421"
+    serviceInfo.XPOINT = "116.117999"
+    serviceInfo.YPOINT = "24.292084"
+    serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
+    serviceInfo.CAP_TYPE = "2"
+    outArr = append(outArr, serviceInfo)
+    jsonString, err := json.Marshal(outArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "008")
 }
 
 func ExportDetectorInfo() {
@@ -70,14 +121,14 @@ func ExportDetectorInfo() {
         detector.EQUIPMENT_NUM = OrgCode + Mac
         detector.EQUIPMENT_NAME = e.Mac
         detector.SECURITY_FACTORY_ORGCODE = OrgCode
-        detector.SERVICE_CODE = "00000000000000"
+        detector.SERVICE_CODE = ServiceCode
         detector.PROVINCE_CODE = "44"
         detector.CITY_CODE = "441400"
         detector.AREA_CODE = "441421"
         detector.EQUIPMENT_TYPE = "00"
         detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
-        detector.CREATE_TIME = "2016-07-01 12:32:00"
+        detector.CREATE_TIME = "2016-07-03 12:32:00"
         outArr = append(outArr, detector)
     }
 
@@ -92,14 +143,34 @@ func ExportDetectorInfo() {
 func ExportTrace() {
     session := db.GetDBSession()
     traceArr := make([]TraceDBInfo, 0)
-    err := session.DB("detector").C("detector_report").Find(bson.M{"company":"01"}).Sort("-time").Limit(1000).All(&traceArr)
+    err := session.DB("detector").C("detector_report").Find(bson.M{"org_code":bson.M{"$ne":"555400905"}}).Sort("-_id").Limit(1000).All(&traceArr)
     if err != nil {
         log.Println(err)
         return
     }
-    for _, e := range traceArr {
 
+    outArr := make([]TraceInfo, 0)
+    for _, e := range traceArr {
+        ApMac := strings.ToUpper(e.ApMac[len(e.ApMac) - 12:])
+        var trace TraceInfo
+        trace.MAC = FormatMac(e.DeviceMac)
+        trace.TYPE = 2
+        trace.START_TIME = e.Time
+        trace.BSSID = FormatMac(e.DeviceMac)
+        trace.XPOINT = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
+        trace.YPOINT = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
+        trace.DEVMAC = FormatMac(ApMac)
+        trace.DEVICENUM = OrgCode + ApMac
+        trace.SERVICECODE = ServiceCode
+        outArr = append(outArr, trace)
     }
+
+    jsonString, err := json.Marshal(outArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "001")
 }
 
 func SaveFile(content string, typeCode string) {

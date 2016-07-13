@@ -246,7 +246,9 @@ func main() {
 
     if saveToDB {
         db.InitDB()
+        export.ExportService()
         export.ExportDetectorInfo()
+        export.ExportTrace()
         return
     }
     if dirPath == "" {
