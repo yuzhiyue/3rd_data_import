@@ -249,6 +249,7 @@ func main() {
         export.ExportService()
         export.ExportDetectorInfo()
         export.ExportTrace()
+        //export.UploadFiles()
         return
     }
     if dirPath == "" {
