@@ -6,13 +6,10 @@ import (
     "strings"
     "os"
     "time"
+    "gopkg.in/mgo.v2"
     "gopkg.in/mgo.v2/bson"
     "strconv"
     "net"
-    "3rd_data_import/data_file"
-    "unicode"
-    "3rd_data_import/db"
-    "3rd_data_import/export"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -23,6 +20,23 @@ func inet_ntoa(ipnr int64) string {
     bytes[3] = byte((ipnr >> 24) & 0xFF)
 
     return net.IPv4(bytes[3],bytes[2],bytes[1],bytes[0]).String()
+}
+
+var session *mgo.Session;
+
+func InitDB()  {
+    var err error
+    session, err = mgo.Dial("112.74.90.113:22522")
+    if err != nil {
+        panic(err)
+    }
+    session.SetMode(mgo.Monotonic, true)
+    log.Println("connect to db succ")
+}
+
+
+func GetDBSession() *mgo.Session {
+    return session
 }
 
 func PrintData(data []map[string]string)  {
@@ -36,7 +50,7 @@ func filterMac(mac string) string {
 }
 
 func UpdateApData(orgcode string, data []map[string]string)  {
-    c := db.GetDBSession().DB("detector").C("detector_info")
+    c := GetDBSession().DB("detector").C("detector_info")
     for i, fields := range data {
         mac := fields["AP_MAC"]
         mac = filterMac(mac)
@@ -53,21 +67,8 @@ func UpdateApData(orgcode string, data []map[string]string)  {
     }
 }
 
-func isPhoneNo(value string) bool {
-    if len(value) == 11 && strings.HasPrefix(value, "1") {
-        for _, v := range []rune(value) {
-            if !unicode.IsDigit(v) {
-                return false
-            }
-        }
-        return true
-    } else {
-        return false
-    }
-}
-
 func SaveDeviceInfo(orgcode string, data []map[string]string)  {
-    c := db.GetDBSession().DB("person_info").C("mac")
+    c := GetDBSession().DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
@@ -84,10 +85,6 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
         if saveToDB {
             if authType == "1020004" {
                 c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
-            } else if authType == "1029999" {
-                if isPhoneNo(authAccount) {
-                    c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
-                }
             }
         }
     }
@@ -95,7 +92,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
 
 func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
-    c := db.GetDBSession().DB("detector").C("detector_report")
+    c := GetDBSession().DB("detector").C("detector_report")
     for i, fields := range data {
         //log.Println(fields)
         mac := fields["MAC"]
@@ -108,7 +105,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
         if err1 != nil || err2 != nil || err3 != nil {
             continue
         }
-        lng, lat = data_file.Bd09towgs84(lng, lat)
+
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
 
         if saveToDB {
@@ -119,7 +116,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
 
 func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     log.Println("SaveLog")
-    c := db.GetDBSession().DB("person_info").C("behavior_log")
+    c := GetDBSession().DB("person_info").C("behavior_log")
     for i, fields := range data {
         log.Println(i,fields)
         mac := fields["MAC"]
@@ -134,7 +131,6 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
             log.Println("error:", err1, err2, err3, err4)
             continue
         }
-        lng, lat = data_file.Bd09towgs84(lng, lat)
         if saveToDB {
             //c.Insert(fields)
             c.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
@@ -179,7 +175,6 @@ func ProcDir(dirPath string)  {
         }
         orgCode := fileNameSplited[1]
         log.Println("parse", zipFile.Meta.FileName, orgCode)
-        PrintData(zipFile.Fields)
         if strings.Contains(zipFile.Meta.FileName, "WA_BASIC_FJ_0003") {
             UpdateApData(orgCode, zipFile.Fields)
         } else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
@@ -189,50 +184,17 @@ func ProcDir(dirPath string)  {
         }else if strings.Contains(zipFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
             SaveBehaviorLog(orgCode, zipFile.Fields)
         } else {
-
+            PrintData(zipFile.Fields)
         }
 
         os.Remove(filePath)
     }
 }
 
-func GetNumber(m bson.M, key string) float64 {
-    v := m[key]
-    if v == nil {
-        return 0
-    }
-    switch v.(type) {
-    case float64:
-        return v.(float64)
-    case float32:
-        return float64(v.(float32))
-    case int:
-        return float64(v.(int))
-    }
-    return 0
-}
-
-func ConvertGeo()  {
-    c := db.GetDBSession().DB("detector").C("detector_report")
-    c2 := db.GetDBSession().Copy().DB("detector").C("detector_report");
-    query := c.Find(bson.M{"org_code":"555400905"})
-    iter := query.Iter()
-    e := bson.M{}
-    for iter.Next(&e) {
-        id,_ := e["_id"]
-        idStr := id.(bson.ObjectId)
-        log.Println(idStr)
-        lng := GetNumber(e, "longitude")
-        lat := GetNumber(e, "latitude")
-        lng, lat = data_file.Bd09towgs84(lng, lat)
-        c2.UpdateId(e["_id"], bson.M{"$set":bson.M{"longitude":lng, "latitude":lat}})
-    }
-}
-
 var saveToDB = true
 var dirPath = ""
 var loopCount = 1
-var openLogFile = false
+var openLogFile = true
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
@@ -245,11 +207,7 @@ func main() {
     }
 
     if saveToDB {
-        db.InitDB()
-        export.ExportService()
-        export.ExportDetectorInfo()
-        export.ExportTrace()
-        return
+        InitDB()
     }
     if dirPath == "" {
         if len(os.Args) == 2 {
