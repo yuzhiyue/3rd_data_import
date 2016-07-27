@@ -20,18 +20,55 @@ type ServiceInfo struct {
     SERVICE_CODE string
     SERVICE_NAME string
     ADDRESS string
+    ZIP string
     BUSINESS_NATURE string
+    PRINCIPAL string
+    PRINCIPAL_TEL string
+    INFOR_MAN string
+    INFOR_MAN_TEL string
+    INFOR_MAN_EMAIL string
+    PRODUCER_CODE string
     STATUS int
+    ENDING_NUMBER int
+    SERVER_NUMBER int
+    EXIT_IP string
+    AUTH_ACCOUNT string
+    NET_TYPE string
+    PRACTITIONER_NUMBER int
+    NET_MONITOR_DEPARTMENT string
+    NET_MONITOR_MAN string
+    NET_MONITOR_MAN_TEL string
+    REMARK string
     SERVICE_TYPE int
     PROVINCE_CODE string
     CITY_CODE string
     AREA_CODE string
+    CITY_TYPE string
+    POLICE_CODE string
+    MAIL_ACCOUNT string
+    MOBILE_ACCOUNT string
     XPOINT string
     YPOINT string
-    CREATE_TIME string
-    CAP_TYPE string
+    GIS_XPOINT string
+    GIS_YPOINT  string
+    TERMINAL_FACTORY_ORGCODE  string
+    ORG_CODE string
+    IP_TYPE string
+    BAND_WIDTH int
+    NET_LAN int
+    NET_LAN_TERMINAL int
+    IS_SAFE string
+    WIFI_TERMINAL int
+    PRINCIPAL_CERT_TYPE string
+    PRINCIPAL_CERT_CODE string
     PERSON_NAME string
     PERSON_TEL string
+    PERSON_QQ string
+    INFOR_MAN_QQ string
+    START_TIME string
+    END_TIME string
+    CREATE_TIME string
+    CAP_TYPE string
 }
 
 type DetectorDBInfo struct {
@@ -53,33 +90,63 @@ type DetectorInfo struct {
     EQUIPMENT_NUM string
     EQUIPMENT_NAME string
     MAC string
+    IP string
     SECURITY_FACTORY_ORGCODE string
+    VENDOR_NAME string
+    VENDOR_NUM string
     SERVICE_CODE  string
     PROVINCE_CODE  string
     CITY_CODE  string
     AREA_CODE  string
+    INSTALL_DATE string
+    INSTALL_POINT string
     EQUIPMENT_TYPE string
-    LONGITUDE  string
-    LATITUDE  string
+    LONGITUDE string
+    LATITUDE string
+    SUBWAY_STATION string
+    SUBWAY_LINE_INFO string
+    SUBWAY_VEHICLE_INFO string
+    SUBWAY_COMPARTMENT_NUM string
+    CAR_CODE string
+    UPLOAD_TIME_INTERVAL int
+    COLLECTION_RADIUS int
     CREATE_TIME string
+    CREATER string
     LAST_CONNECT_TIME string
+    REMARK string
     WDA_VERSION string
     FIRMWARE_VERSION string
-    COLLECTION_RADIU int
-    UPLOAD_TIME_INTERVAL int
-    CREATER string
 }
 
 type TraceInfo struct {
     MAC string
     TYPE uint32
     START_TIME uint32
+    END_TIME uint32
+    POWER string
     BSSID string
+    ESSID string
+    HISTORY_ESSID string
+    MODEL string
+    OS_VERSION string
+    IMEI string
+    IMSI string
+    STATION string
     XPOINT string
     YPOINT string
+    PHONE string
     DEVMAC string
     DEVICENUM string
     SERVICECODE string
+    PROTOCOL_TYPE string
+    ACCOUNT string
+    FLAG string
+    URL string
+    COMPANY_ID string
+    AP_CHANNEL string
+    AP_ENCRYTYPE string
+    CONSULT_XPOINT string
+    CONSULT_YPOINT string
 }
 
 var OrgCode string = "589504630"
@@ -147,7 +214,7 @@ func ExportDetectorInfo() {
         detector.LAST_CONNECT_TIME = time.Now().Format("2006-01-02 15:04:05")
         detector.WDA_VERSION = "1.10"
         detector.FIRMWARE_VERSION = "1.0"
-        detector.COLLECTION_RADIU = 150
+        detector.COLLECTION_RADIUS = 150
         detector.UPLOAD_TIME_INTERVAL = 60
         detector.CREATER = "黄工"
         outArr = append(outArr, detector)
