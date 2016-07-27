@@ -232,7 +232,7 @@ func ConvertGeo()  {
 var saveToDB = true
 var dirPath = ""
 var loopCount = 1
-var openLogFile = false
+var openLogFile = true
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
@@ -246,12 +246,21 @@ func main() {
 
     if saveToDB {
         db.InitDB()
-        export.ExportService()
-        export.ExportDetectorInfo()
-        export.ExportTrace()
-        //export.UploadFiles()
-        return
     }
+
+    if len(os.Args) == 2 {
+        if os.Args[1] == "export_service" {
+            export.ExportService()
+            return
+        } else if os.Args[1] == "export_detector" {
+            export.ExportDetectorInfo()
+            return
+        } else if os.Args[1] == "export_trace" {
+            export.ExportTrace()
+            return
+        }
+    }
+
     if dirPath == "" {
         if len(os.Args) == 2 {
             dirPath = os.Args[1]
