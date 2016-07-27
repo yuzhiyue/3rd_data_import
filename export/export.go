@@ -11,11 +11,15 @@ import (
     "math/rand"
     "os"
     "fmt"
+    "github.com/dutchcoders/goftp"
+    "io/ioutil"
+    "crypto/tls"
 )
 
 type ServiceInfo struct {
     SERVICE_CODE string
     SERVICE_NAME string
+    ADDRESS string
     BUSINESS_NATURE string
     STATUS int
     SERVICE_TYPE int
@@ -26,6 +30,8 @@ type ServiceInfo struct {
     YPOINT string
     CREATE_TIME string
     CAP_TYPE string
+    PERSON_NAME string
+    PERSON_TEL string
 }
 
 type DetectorDBInfo struct {
@@ -56,6 +62,12 @@ type DetectorInfo struct {
     LONGITUDE  string
     LATITUDE  string
     CREATE_TIME string
+    LAST_CONNECT_TIME string
+    WDA_VERSION string
+    FIRMWARE_VERSION string
+    COLLECTION_RADIU int
+    UPLOAD_TIME_INTERVAL int
+    CREATER string
 }
 
 type TraceInfo struct {
@@ -71,8 +83,8 @@ type TraceInfo struct {
 }
 
 var OrgCode string = "589504630"
-var OutPath = "d:/out"
-var ServiceCode = "441421" + "39" + "000001"
+var OutPath = "out"
+var ServiceCode = "441402" + "39" + "000001"
 func FormatMac(mac string ) string {
     return strings.ToUpper(mac[0:2] + "-" + mac[2:4] + "-" + mac[4:6] + "-" + mac[6:8] + "-" + mac[8:10] + "-" + mac[10:12])
 }
@@ -82,16 +94,19 @@ func ExportService() {
     var serviceInfo ServiceInfo
     serviceInfo.SERVICE_CODE = ServiceCode
     serviceInfo.SERVICE_NAME = "梅州市WIFI采集"
+    serviceInfo.ADDRESS = "广东省梅州市梅江区江南街道梅江三路138号"
+    serviceInfo.PERSON_NAME = "黄工"
+    serviceInfo.PERSON_TEL = "15870002521"
     serviceInfo.BUSINESS_NATURE = "3"
     serviceInfo.STATUS = 1
     serviceInfo.SERVICE_TYPE = 9
-    serviceInfo.PROVINCE_CODE = "44"
+    serviceInfo.PROVINCE_CODE = "440000"
     serviceInfo.CITY_CODE = "441400"
-    serviceInfo.AREA_CODE = "441421"
+    serviceInfo.AREA_CODE = "441402"
     serviceInfo.XPOINT = "116.117999"
     serviceInfo.YPOINT = "24.292084"
     serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
-    serviceInfo.CAP_TYPE = "2"
+    serviceInfo.CAP_TYPE = "1"
     outArr = append(outArr, serviceInfo)
     jsonString, err := json.Marshal(outArr)
     if err != nil {
@@ -119,16 +134,22 @@ func ExportDetectorInfo() {
         var detector DetectorInfo
         detector.MAC = FormatMac(Mac)
         detector.EQUIPMENT_NUM = OrgCode + Mac
-        detector.EQUIPMENT_NAME = e.Mac
+        detector.EQUIPMENT_NAME = "广晟通信_梅州_" + Mac[6:]
         detector.SECURITY_FACTORY_ORGCODE = OrgCode
         detector.SERVICE_CODE = ServiceCode
-        detector.PROVINCE_CODE = "44"
+        detector.PROVINCE_CODE = "440000"
         detector.CITY_CODE = "441400"
-        detector.AREA_CODE = "441421"
-        detector.EQUIPMENT_TYPE = "00"
+        detector.AREA_CODE = "441402"
+        detector.EQUIPMENT_TYPE = "10"
         detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
         detector.CREATE_TIME = "2016-07-03 12:32:00"
+        detector.LAST_CONNECT_TIME = time.Now().Format("2006-01-02 15:04:05")
+        detector.WDA_VERSION = "1.10"
+        detector.FIRMWARE_VERSION = "1.0"
+        detector.COLLECTION_RADIU = 150
+        detector.UPLOAD_TIME_INTERVAL = 60
+        detector.CREATER = "黄工"
         outArr = append(outArr, detector)
     }
 
@@ -156,7 +177,7 @@ func ExportTrace() {
         trace.MAC = FormatMac(e.DeviceMac)
         trace.TYPE = 2
         trace.START_TIME = e.Time
-        trace.BSSID = FormatMac(e.DeviceMac)
+        trace.BSSID = FormatMac(ApMac)
         trace.XPOINT = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
         trace.YPOINT = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         trace.DEVMAC = FormatMac(ApMac)
@@ -174,7 +195,9 @@ func ExportTrace() {
 }
 
 func SaveFile(content string, typeCode string) {
-    fileName := OutPath + "/" + time.Now().Format("20060102150405") + "_" + strconv.Itoa(rand.Intn(800) + 100) + "_440200100001_" + OrgCode + "_" + typeCode +".log"
+    PthSep := string(os.PathSeparator)
+    os.Mkdir(OutPath, 0777)
+    fileName := OutPath + PthSep + time.Now().Format("20060102150405") + strconv.Itoa(rand.Intn(800) + 100) + "_139_441400_" + OrgCode + "_" + typeCode +".log"
     fout, err := os.Create(fileName)
     defer fout.Close()
     if err != nil {
@@ -183,4 +206,66 @@ func SaveFile(content string, typeCode string) {
     }
 
     fout.WriteString(content)
+}
+
+func UploadFile(filename string) {
+    var ftp *goftp.FTP
+    var err error
+    // For debug messages: goftp.ConnectDbg("ftp.server.com:21")
+    if ftp, err = goftp.Connect(""); err != nil {
+        panic(err)
+    }
+
+    defer ftp.Close()
+
+    config := tls.Config{
+        InsecureSkipVerify: true,
+        ClientAuth:         tls.RequestClientCert,
+    }
+    if err = ftp.AuthTLS(&config); err != nil {
+        panic(err)
+    }
+    if err = ftp.Login("", ""); err != nil {
+        panic(err)
+    }
+    if err = ftp.Cwd("/"); err != nil {
+        panic(err)
+    }
+    var curpath string
+    if curpath, err = ftp.Pwd(); err != nil {
+        panic(err)
+    }
+    fmt.Printf("Current path: %s\n", curpath)
+    err = ftp.Upload(filename);
+    if err != nil {
+        panic(err)
+    }
+    //os.Remove(filename)
+}
+
+func UploadFiles()  {
+    files := make([]string, 0)
+    dir, err := ioutil.ReadDir(OutPath)
+    if err != nil {
+        return
+    }
+    PthSep := string(os.PathSeparator)
+    for _, f := range dir {
+        if f.IsDir() {
+            continue
+        }
+        if !strings.HasSuffix(f.Name(), ".log") {
+            continue
+        }
+        if time.Now().Unix() - f.ModTime().Unix() < 60{
+            continue
+        }
+        files = append(files, f.Name())
+        log.Println("append", f.Name())
+    }
+    for _, fileName := range files {
+        filePath := OutPath + PthSep + fileName
+        log.Println("start proc", filePath)
+        UploadFile(filePath)
+    }
 }
