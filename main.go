@@ -246,9 +246,9 @@ func main() {
 
     if saveToDB {
         db.InitDB()
-        export.ExportDetectorInfo()
+        //export.ExportDetectorInfo()
         //export.ExportTrace()
-        return
+        //return
     }
 
     if len(os.Args) == 3 {
