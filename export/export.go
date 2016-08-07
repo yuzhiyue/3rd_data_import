@@ -11,9 +11,8 @@ import (
     "math/rand"
     "os"
     "fmt"
-    "github.com/dutchcoders/goftp"
     "io/ioutil"
-    "crypto/tls"
+    "net/http"
 )
 
 type ServiceInfo struct {
@@ -73,6 +72,7 @@ type ServiceInfo struct {
 
 type DetectorDBInfo struct {
     Mac string `bson:"_id"`
+    No int `bson:"no"`
     Longitude float64 `bson:"longitude"`
     Latitude float64 `bson:"latitude"`
     Last_active_time uint32 `bson:"last_active_time"`
@@ -152,16 +152,76 @@ type TraceInfo struct {
 var OrgCode string = "589504630"
 var OutPath = "out"
 var ServiceCode = "441402" + "39" + "000001"
+var ServiceCodePrefix = "441402" + "39"
 func FormatMac(mac string ) string {
     return strings.ToUpper(mac[0:2] + "-" + mac[2:4] + "-" + mac[4:6] + "-" + mac[6:8] + "-" + mac[8:10] + "-" + mac[10:12])
 }
 
-func ExportService() {
-    outArr := make([]ServiceInfo, 0)
+func GeoConvert(lng float64, lat float64) (float64,float64) {
+    url := fmt.Sprintf("http://restapi.amap.com/v3/assistant/coordinate/convert?key=4e7f4dba3fdfe5fbc2ff361da70f2c2a&locations=%f,%f&coordsys=gps", lng, lat)
+    resp, err := http.Get(url)
+    if err != nil {
+        // handle error
+    }
+
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    if err == nil {
+        var res map[string] string
+        err = json.Unmarshal(body, &res)
+        if err == nil {
+            loc, ok := res["locations"]
+            if ok {
+                geo := strings.Split(loc, ",")
+                lng_o, _ := strconv.ParseFloat(geo[0], 64)
+                lat_o, _ := strconv.ParseFloat(geo[1], 64)
+                return lng_o, lat_o
+            }
+        }
+    }
+    return 0, 0
+}
+
+func GeoCode(lng float64, lat float64) string {
+    url := fmt.Sprintf("http://restapi.amap.com/v3/geocode/regeo?key=4e7f4dba3fdfe5fbc2ff361da70f2c2a&location=%f,%f&extensions=base&batch=false", lng, lat)
+    resp, err := http.Get(url)
+    if err != nil {
+        return "广东省梅州市梅江区江南街道梅江三路138号"
+    }
+
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    if err == nil {
+        var res map[string] interface{}
+        err = json.Unmarshal(body, &res)
+        if err == nil {
+            fmt.Println(string(body))
+            regCode, ok := res["regeocode"]
+            if ok {
+                regCodeObj := regCode.(map[string] interface{})
+                fmtAddress, ok := regCodeObj["formatted_address"]
+                if ok {
+                    return fmtAddress.(string)
+                }
+            }
+        }
+    }
+    return "广东省梅州市梅江区江南街道梅江三路138号"
+}
+
+func GetGDGeoCode(lng float64, lat float64) string {
+    lng2, lat2 := GeoConvert(lng, lat)
+    if lng2 !=0 && lat2 != 0 {
+        return GeoCode(lng2, lat2)
+    }
+    return "广东省梅州市梅江区江南街道梅江三路138号"
+}
+
+func ExportService(no int, lng float64, lat float64) ServiceInfo {
     var serviceInfo ServiceInfo
-    serviceInfo.SERVICE_CODE = ServiceCode
-    serviceInfo.SERVICE_NAME = "梅州市WIFI采集"
-    serviceInfo.ADDRESS = "广东省梅州市梅江区江南街道梅江三路138号"
+    serviceInfo.SERVICE_CODE = ServiceCodePrefix + fmt.Sprintf("%06d", no)
+    serviceInfo.SERVICE_NAME = "梅州市WIFI采集_" + strconv.Itoa(no)
+    serviceInfo.ADDRESS = GetGDGeoCode(lng, lat)
     serviceInfo.PERSON_NAME = "黄工"
     serviceInfo.PERSON_TEL = "15870002521"
     serviceInfo.BUSINESS_NATURE = "3"
@@ -170,17 +230,11 @@ func ExportService() {
     serviceInfo.PROVINCE_CODE = "440000"
     serviceInfo.CITY_CODE = "441400"
     serviceInfo.AREA_CODE = "441402"
-    serviceInfo.XPOINT = "116.117999"
-    serviceInfo.YPOINT = "24.292084"
+    serviceInfo.XPOINT = strconv.FormatFloat(lng, 'f', 6, 64)
+    serviceInfo.YPOINT = strconv.FormatFloat(lat, 'f', 6, 64)
     serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
     serviceInfo.CAP_TYPE = "1"
-    outArr = append(outArr, serviceInfo)
-    jsonString, err := json.Marshal(outArr)
-    if err != nil {
-        return
-    }
-    log.Print(string(jsonString))
-    SaveFile(string(jsonString), "008")
+    return serviceInfo
 }
 
 func ExportDetectorInfo() {
@@ -192,18 +246,20 @@ func ExportDetectorInfo() {
         return
     }
     outArr := make([]DetectorInfo, 0)
+    outServiceArr := make([]ServiceInfo, 0)
     for _, e := range detectorArr {
         if len(e.Mac) < 12 {
             continue
         }
-
+        service := ExportService(e.No, e.Longitude, e.Latitude)
+        outServiceArr = append(outServiceArr, service)
         Mac := strings.ToUpper(e.Mac[len(e.Mac) - 12:])
         var detector DetectorInfo
         detector.MAC = FormatMac(Mac)
         detector.EQUIPMENT_NUM = OrgCode + Mac
         detector.EQUIPMENT_NAME = "广晟通信_梅州_" + Mac[6:]
         detector.SECURITY_FACTORY_ORGCODE = OrgCode
-        detector.SERVICE_CODE = ServiceCode
+        detector.SERVICE_CODE = ServiceCodePrefix + fmt.Sprintf("%06d", e.No)
         detector.PROVINCE_CODE = "440000"
         detector.CITY_CODE = "441400"
         detector.AREA_CODE = "441402"
@@ -226,6 +282,13 @@ func ExportDetectorInfo() {
     }
     log.Print(string(jsonString))
     SaveFile(string(jsonString), "010")
+
+    jsonString, err = json.Marshal(outServiceArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "008")
 }
 
 func ExportTrace() {
@@ -275,41 +338,6 @@ func SaveFile(content string, typeCode string) {
     fout.WriteString(content)
 }
 
-func UploadFile(filename string) {
-    var ftp *goftp.FTP
-    var err error
-    // For debug messages: goftp.ConnectDbg("ftp.server.com:21")
-    if ftp, err = goftp.Connect(""); err != nil {
-        panic(err)
-    }
-
-    defer ftp.Close()
-
-    config := tls.Config{
-        InsecureSkipVerify: true,
-        ClientAuth:         tls.RequestClientCert,
-    }
-    if err = ftp.AuthTLS(&config); err != nil {
-        panic(err)
-    }
-    if err = ftp.Login("", ""); err != nil {
-        panic(err)
-    }
-    if err = ftp.Cwd("/"); err != nil {
-        panic(err)
-    }
-    var curpath string
-    if curpath, err = ftp.Pwd(); err != nil {
-        panic(err)
-    }
-    fmt.Printf("Current path: %s\n", curpath)
-    err = ftp.Upload(filename);
-    if err != nil {
-        panic(err)
-    }
-    //os.Remove(filename)
-}
-
 func UploadFiles()  {
     files := make([]string, 0)
     dir, err := ioutil.ReadDir(OutPath)
@@ -333,6 +361,5 @@ func UploadFiles()  {
     for _, fileName := range files {
         filePath := OutPath + PthSep + fileName
         log.Println("start proc", filePath)
-        UploadFile(filePath)
     }
 }

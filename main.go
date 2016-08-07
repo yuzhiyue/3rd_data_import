@@ -246,17 +246,15 @@ func main() {
 
     if saveToDB {
         db.InitDB()
-        //export.ExportService()
-        //export.ExportDetectorInfo()
+        export.ExportDetectorInfo()
         //export.ExportTrace()
-        //return
+        return
     }
 
     if len(os.Args) == 3 {
         path := os.Args[2]
         export.OutPath = path
         if os.Args[1] == "export_service" {
-            export.ExportService()
             return
         } else if os.Args[1] == "export_detector" {
             export.ExportDetectorInfo()
