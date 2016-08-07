@@ -182,11 +182,11 @@ func GeoConvert(lng float64, lat float64) (float64,float64) {
     return 0, 0
 }
 
-func GeoCode(lng float64, lat float64) string {
+func GeoCode(lng float64, lat float64) (string,string) {
     url := fmt.Sprintf("http://restapi.amap.com/v3/geocode/regeo?key=4e7f4dba3fdfe5fbc2ff361da70f2c2a&location=%f,%f&extensions=base&batch=false", lng, lat)
     resp, err := http.Get(url)
     if err != nil {
-        return "广东省梅州市梅江区江南街道梅江三路138号"
+        return "广东省梅州市梅江区江南街道梅江三路138号", "441402"
     }
 
     defer resp.Body.Close()
@@ -199,29 +199,34 @@ func GeoCode(lng float64, lat float64) string {
             regCode, ok := res["regeocode"]
             if ok {
                 regCodeObj := regCode.(map[string] interface{})
-                fmtAddress, ok := regCodeObj["formatted_address"]
-                if ok {
-                    return fmtAddress.(string)
+                fmtAddress, ok1 := regCodeObj["formatted_address"]
+                addressComponent, ok2 := regCodeObj["addressComponent"]
+                if ok1 && ok2 {
+                    addressComponentObj := addressComponent.(map[string] interface{})
+                    adCode, ok3 := addressComponentObj["adcode"]
+                    if ok3 {
+                        return fmtAddress.(string), adCode.(string)
+                    }
                 }
             }
         }
     }
-    return "广东省梅州市梅江区江南街道梅江三路138号"
+    return "广东省梅州市梅江区江南街道梅江三路138号", "441402"
 }
 
-func GetGDGeoCode(lng float64, lat float64) string {
+func GetGDGeoCode(lng float64, lat float64) (string, string) {
     lng2, lat2 := GeoConvert(lng, lat)
     if lng2 !=0 && lat2 != 0 {
         return GeoCode(lng2, lat2)
     }
-    return "广东省梅州市梅江区江南街道梅江三路138号"
+    return "广东省梅州市梅江区江南街道梅江三路138号", "441402"
 }
 
 func ExportService(no int, lng float64, lat float64) ServiceInfo {
     var serviceInfo ServiceInfo
     serviceInfo.SERVICE_CODE = ServiceCodePrefix + fmt.Sprintf("%06d", no)
     serviceInfo.SERVICE_NAME = "梅州市WIFI采集_" + strconv.Itoa(no)
-    serviceInfo.ADDRESS = GetGDGeoCode(lng, lat)
+
     serviceInfo.PERSON_NAME = "黄工"
     serviceInfo.PERSON_TEL = "15870002521"
     serviceInfo.BUSINESS_NATURE = "3"
@@ -229,7 +234,8 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
     serviceInfo.SERVICE_TYPE = 9
     serviceInfo.PROVINCE_CODE = "440000"
     serviceInfo.CITY_CODE = "441400"
-    serviceInfo.AREA_CODE = "441402"
+    serviceInfo.ADDRESS, serviceInfo.AREA_CODE = GetGDGeoCode(lng, lat)
+
     serviceInfo.XPOINT = strconv.FormatFloat(lng, 'f', 6, 64)
     serviceInfo.YPOINT = strconv.FormatFloat(lat, 'f', 6, 64)
     serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
@@ -237,7 +243,7 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
     return serviceInfo
 }
 
-func ExportDetectorInfo() {
+func  ExportDetectorInfo() {
     session := db.GetDBSession()
     detectorArr := make([]DetectorDBInfo, 0)
     err := session.DB("detector").C("detector_info").Find(bson.M{"company":"01"}).All(&detectorArr)
@@ -259,10 +265,10 @@ func ExportDetectorInfo() {
         detector.EQUIPMENT_NUM = OrgCode + Mac
         detector.EQUIPMENT_NAME = "广晟通信_梅州_" + Mac[6:]
         detector.SECURITY_FACTORY_ORGCODE = OrgCode
-        detector.SERVICE_CODE = ServiceCodePrefix + fmt.Sprintf("%06d", e.No)
+        detector.SERVICE_CODE = service.SERVICE_CODE
         detector.PROVINCE_CODE = "440000"
         detector.CITY_CODE = "441400"
-        detector.AREA_CODE = "441402"
+        detector.AREA_CODE = service.AREA_CODE
         detector.EQUIPMENT_TYPE = "10"
         detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
