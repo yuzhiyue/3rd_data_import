@@ -3,11 +3,11 @@ package data_file
 import (
     "encoding/xml"
     "log"
-    "strconv"
     "archive/zip"
     "io/ioutil"
     "strings"
     "errors"
+    "strconv"
 )
 
 type Item struct {
@@ -17,16 +17,15 @@ type Item struct {
     Eng string `xml:"eng,attr"`
     Chn string `xml:"chn,chn"`
 }
-//type Data struct {
-//    Name string `xml:"name,attr"`
-//    Rmk string `xml:"rmk,attr"`
-//    Items []Item `xml:"ITEM"`
-//}
+type Data struct {
+    Items []Item `xml:"ITEM"`
+    Datasets []DataSet `xml:"DATASET"`
+}
+
 type DataSet struct {
     Name string `xml:"name,attr"`
     Rmk string `xml:"rmk,attr"`
-    Items []Item `xml:"DATA>ITEM"`
-    Datasets []DataSet `xml:"DATA>DATASET"`
+    Data []Data `xml:"DATA"`
 }
 type FileMetaXml struct {
     Dataset DataSet `xml:"DATASET"`
@@ -123,39 +122,48 @@ func (self * FileMeta)Decode(xmlContent []byte) error {
         log.Println("parse xml err,", err)
         return err
     }
+    log.Println(xmlInfo)
+    for _, data := range xmlInfo.Dataset.Data {
+        for _,item := range data.Items {
+            switch item.Key {
+            case "I010032": {
+                self.ColDelimiter = item.Val
+                break;
+            }
+            case "I010033": {
+                self.RowDelimiter = item.Val;
+                break;
+            }
+            case "I010038": {
+                self.StartLine,_ = strconv.Atoi(item.Val);
+                break;
+            }
+            }
+        }
 
-    for _,item := range xmlInfo.Dataset.Datasets[0].Items {
-        switch item.Key {
-        case "I010032": {
-            self.ColDelimiter = item.Val
-            break;
-        }
-        case "I010033": {
-            self.RowDelimiter = item.Val;
-            break;
-        }
-        case "I010038": {
-            self.StartLine,_ = strconv.Atoi(item.Val);
-            break;
-        }
+        for _, dataset := range data.Datasets {
+            if dataset.Name == "WA_COMMON_010014" {
+                for _, item := range dataset.Data[0].Items {
+                    switch item.Key {
+                    case "H040003": {
+                        self.Path = item.Val
+                        break;
+                    }
+                    case "H010020": {
+                        self.FileName = item.Val;
+                        break;
+                    }
+                    }
+                }
+            }
+
+            if dataset.Name == "WA_COMMON_010015" {
+                for _, item := range dataset.Data[0].Items {
+                    self.Fields = append(self.Fields, item.Eng)
+                }
+            }
         }
     }
 
-    for _, item := range xmlInfo.Dataset.Datasets[0].Datasets[0].Items {
-        switch item.Key {
-        case "H040003": {
-            self.Path = item.Val
-            break;
-        }
-        case "H010020": {
-            self.FileName = item.Val;
-            break;
-        }
-        }
-    }
-
-    for _, item := range xmlInfo.Dataset.Datasets[0].Datasets[1].Items {
-        self.Fields = append(self.Fields, item.Eng)
-    }
     return nil
 }

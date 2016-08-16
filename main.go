@@ -229,10 +229,10 @@ func ConvertGeo()  {
     }
 }
 
-var saveToDB = true
-var dirPath = ""
+var saveToDB = false
+var dirPath = "c:\\11"
 var loopCount = 1
-var openLogFile = true
+var openLogFile = false
 func main() {
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
     if openLogFile {
