@@ -194,7 +194,7 @@ func ProcDir(dirPath string)  {
 
             }
         }
-        //os.Remove(filePath)
+        os.Remove(filePath)
     }
 }
 
