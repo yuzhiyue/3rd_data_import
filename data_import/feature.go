@@ -13,7 +13,9 @@ type Feature struct {
 }
 
 func SaveFeature(f1 Feature, f2 Feature) {
-    c := db.GetDBSession().DB("feature").C("feature_set")
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("feature").C("feature_set")
     f1Obj := bson.M{}
     f2Obj := bson.M{}
     err1 := c.Find(bson.M{"feature.value": f1.Value, "feature.type": f1.Type}).One(f1Obj)

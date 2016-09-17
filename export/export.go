@@ -245,6 +245,7 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
 
 func  ExportDetectorInfo() {
     session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
     detectorArr := make([]DetectorDBInfo, 0)
     err := session.DB("detector").C("detector_info").Find(bson.M{"company":"01"}).All(&detectorArr)
     if err != nil {
@@ -299,6 +300,7 @@ func  ExportDetectorInfo() {
 
 func ExportTrace() {
     session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
     traceArr := make([]TraceDBInfo, 0)
     err := session.DB("detector").C("detector_report").Find(bson.M{"org_code":bson.M{"$ne":"555400905"}}).Sort("-_id").Limit(1000).All(&traceArr)
     if err != nil {

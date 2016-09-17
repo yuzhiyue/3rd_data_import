@@ -37,7 +37,9 @@ func filterMac(mac string) string {
 }
 
 func UpdateApData(orgcode string, data []map[string]string)  {
-    c := db.GetDBSession().DB("detector").C("detector_info")
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("detector").C("detector_info")
     for i, fields := range data {
         mac := fields["AP_MAC"]
         mac = filterMac(mac)
@@ -68,7 +70,9 @@ func isPhoneNo(value string) bool {
 }
 
 func SaveDeviceInfo(orgcode string, data []map[string]string)  {
-    c := db.GetDBSession().DB("person_info").C("mac")
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("person_info").C("mac")
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
@@ -106,7 +110,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
             } else {
                 continue;
             }
-            data_import.SaveFeature(f1, f2)
+            go data_import.SaveFeature(f1, f2)
         }
     }
 }
@@ -114,7 +118,9 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
 
 func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
-    c := db.GetDBSession().DB("detector").C("detector_report")
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("detector").C("detector_report")
     for i, fields := range data {
         //log.Println(fields)
         mac := fields["MAC"]
@@ -138,7 +144,9 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
 
 func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     log.Println("SaveLog")
-    c := db.GetDBSession().DB("person_info").C("behavior_log")
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("person_info").C("behavior_log")
     for i, fields := range data {
         log.Println(i,fields)
         mac := fields["MAC"]
