@@ -163,14 +163,14 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
 
 func SaveVirtualID(orgcode string, data []map[string]string) {
     log.Println("SaveVirtualID")
-    c := db.GetDBSession().DB("person_info").C("mac")
-    for _, fields := range data {
-        authType := fields["B040021"]
-        authAccount := fields["B040022"]
-        virtualType := fields["B040003"]
-        virtualID := fields["B040001"]
-        mac := fields["C040002"]
-    }
+    //c := db.GetDBSession().DB("person_info").C("mac")
+    //for _, fields := range data {
+    //    authType := fields["B040021"]
+    //    authAccount := fields["B040022"]
+    //    virtualType := fields["B040003"]
+    //    virtualID := fields["B040001"]
+    //    mac := fields["C040002"]
+    //}
 }
 
 func ProcDir(dirPath string)  {
