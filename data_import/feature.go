@@ -13,7 +13,7 @@ type Feature struct {
 }
 
 func SaveFeature(f1 Feature, f2 Feature) {
-    c := db.GetDBSession().DB("feature").C("feature")
+    c := db.GetDBSession().DB("feature").C("feature_set")
     f1Obj := bson.M{}
     f2Obj := bson.M{}
     err1 := c.Find(bson.M{"feature.value": f1.Value, "feature.type": f1.Type}).One(f1Obj)
@@ -22,19 +22,19 @@ func SaveFeature(f1 Feature, f2 Feature) {
         //merge
         feature2, ok := f2Obj["feature"]
         if ok {
-            c.UpdateId(f1Obj["_id"].(string), bson.M{"$pushAll":bson.M{"feature_set":feature2.([]interface {})}})
+            c.UpdateId(f1Obj["_id"].(string), bson.M{"$pushAll":bson.M{"feature":feature2.([]interface {})}})
             c.RemoveId(f1Obj["_id"].(string))
         }
     } else if (err1 == nil && err2 != nil) {
         //push f2 in f1
-        c.UpdateId(f1Obj["_id"].(string), bson.M{"$push":bson.M{"feature_set":bson.M{"type":f2.Type, "value":f2.Value, "org_code": f2.OrgCode, "time": f2.Time}}})
+        c.UpdateId(f1Obj["_id"].(string), bson.M{"$push":bson.M{"feature":bson.M{"type":f2.Type, "value":f2.Value, "org_code": f2.OrgCode, "time": f2.Time}}})
     } else if (err1 != nil && err2 == nil) {
         //push f1 in f2
-        c.UpdateId(f2Obj["_id"].(string), bson.M{"$push":bson.M{"feature_set":bson.M{"type":f1.Type, "value":f1.Value, "org_code": f1.OrgCode, "time": f1.Time}}})
+        c.UpdateId(f2Obj["_id"].(string), bson.M{"$push":bson.M{"feature":bson.M{"type":f1.Type, "value":f1.Value, "org_code": f1.OrgCode, "time": f1.Time}}})
     } else {
         //insert new
         featureArr := []bson.M{bson.M{"type":f1.Type, "value":f1.Value, "org_code": f1.OrgCode, "time": f1.Time},
             bson.M{"type":f2.Type, "value":f2.Value, "org_code": f2.OrgCode, "time": f2.Time}}
-        c.Insert(bson.M{"_id":bson.NewObjectId().Hex(), "feature_set":featureArr})
+        c.Insert(bson.M{"_id":bson.NewObjectId().Hex(), "feature":featureArr})
     }
 }
