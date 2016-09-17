@@ -97,21 +97,27 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
             f1.OrgCode = orgcode
             f1.Time = uint32(time)
             if authType == "1020004" {
-                f2.Type = "02"
-                f2.Value = authAccount
-                f2.OrgCode = orgcode
-                f2.Time = uint32(time)
                 bulk.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
             } else if authType == "1029999" {
                 if isPhoneNo(authAccount) {
-                    f2.Type = "02"
+                    bulk.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+                }
+            }
+
+            if authType == "1029999" {
+                if isPhoneNo(authAccount) {
+                    f2.Type = "1020004"
                     f2.Value = authAccount
                     f2.OrgCode = orgcode
                     f2.Time = uint32(time)
-                    bulk.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+                } else {
+                    continue
                 }
             } else {
-                continue;
+                f2.Type = authType
+                f2.Value = authAccount
+                f2.OrgCode = orgcode
+                f2.Time = uint32(time)
             }
             waitgroup.Add(1)
             go data_import.SaveFeature(&waitgroup, f1, f2)
@@ -181,14 +187,62 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
 
 func SaveVirtualID(orgcode string, data []map[string]string) {
     log.Println("SaveVirtualID")
-    //c := db.GetDBSession().DB("person_info").C("mac")
-    //for _, fields := range data {
-    //    authType := fields["B040021"]
-    //    authAccount := fields["B040022"]
-    //    virtualType := fields["B040003"]
-    //    virtualID := fields["B040001"]
-    //    mac := fields["C040002"]
-    //}
+    var waitgroup sync.WaitGroup
+    for _, fields := range data {
+        authType := fields["B040021"]
+        authAccount := fields["B040022"]
+        virtualType := fields["B040003"]
+        virtualID := fields["B040001"]
+        mac := fields["C040002"]
+        mac = filterMac(mac)
+        time, err := strconv.Atoi(fields["H010015"])
+        if err {
+            continue
+        }
+        fAuth := data_import.Feature{}
+        fVirtual := data_import.Feature{}
+        fMac := data_import.Feature{}
+
+        if authType == "1029999" {
+            if isPhoneNo(authAccount) {
+                fAuth.Type = "1020004"
+            } else {
+                continue
+            }
+        } else if authType == "1020002" {
+            fAuth.Value = filterMac(fAuth.Value)
+        } else {
+            fAuth.Type = authType
+            fAuth.Value = authAccount
+            fAuth.OrgCode = orgcode
+            fAuth.Time = uint32(time)
+        }
+
+        fVirtual.Type = virtualType
+        fVirtual.OrgCode = orgcode
+        fVirtual.Time = uint32(time)
+        if fVirtual.Type == "0000001104" {
+            fVirtual.Value = virtualID + "_" + orgcode
+        } else {
+            fVirtual.Value = virtualID
+        }
+
+        fMac.Value = mac
+        fMac.OrgCode = orgcode
+        fMac.Time = uint32(time)
+        if authType == "1020002" {
+            waitgroup.Add(1)
+            go data_import.SaveFeature(&waitgroup, fMac, fVirtual)
+        } else {
+            waitgroup.Add(1)
+            go data_import.SaveFeature(&waitgroup, fMac, fVirtual)
+            waitgroup.Add(1)
+            go data_import.SaveFeature(&waitgroup, fMac, fAuth)
+            waitgroup.Add(1)
+            go data_import.SaveFeature(&waitgroup, fAuth, fVirtual)
+        }
+    }
+    waitgroup.Wait()
 }
 
 func ProcDir(dirPath string)  {
@@ -229,7 +283,7 @@ func ProcDir(dirPath string)  {
         orgCode := fileNameSplited[1]
         for _, bcpFile := range zipFile.BCPFiles {
             log.Println("parse", bcpFile.Meta.FileName, orgCode)
-            //PrintData(bcpFile.Fields)
+            PrintData(bcpFile.Fields)
            // PrintData(bcpFile.KeyFields)
             ProcContent(orgCode, &bcpFile)
         }
@@ -246,6 +300,8 @@ func ProcContent(orgCode string, bcpFile * data_file.BCPFile)  {
         SaveDeviceInfo(orgCode, bcpFile.Fields)
     }else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
         SaveBehaviorLog(orgCode, bcpFile.Fields)
+    } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0003") {
+        SaveVirtualID(orgCode, bcpFile.KeyFields)
     } else {
 
     }
