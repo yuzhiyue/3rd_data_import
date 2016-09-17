@@ -74,6 +74,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     c := session.DB("person_info").C("mac")
+    bulk := c.Bulk()
     var waitgroup sync.WaitGroup
     for i, fields := range data {
         mac := fields["MAC"]
@@ -100,14 +101,14 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
                 f2.Value = authAccount
                 f2.OrgCode = orgcode
                 f2.Time = uint32(time)
-                c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+                bulk.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
             } else if authType == "1029999" {
                 if isPhoneNo(authAccount) {
                     f2.Type = "02"
                     f2.Value = authAccount
                     f2.OrgCode = orgcode
                     f2.Time = uint32(time)
-                    c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
+                    bulk.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
                 }
             } else {
                 continue;
@@ -116,6 +117,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
             go data_import.SaveFeature(&waitgroup, f1, f2)
         }
     }
+    bulk.Run()
     waitgroup.Wait()
 }
 
@@ -125,6 +127,7 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     c := session.DB("detector").C("detector_report")
+    bulk := c.Bulk()
     for i, fields := range data {
         //log.Println(fields)
         mac := fields["MAC"]
@@ -141,9 +144,10 @@ func SaveTraceInfo(orgcode string, data []map[string]string)  {
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "lng", lng, "lat", lat, "time", time)
 
         if saveToDB {
-            c.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
+            bulk.Insert(bson.M{"ap_mac":ap_mac, "device_mac":mac, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
         }
     }
+    bulk.Run()
 }
 
 func SaveBehaviorLog(orgcode string, data []map[string]string)  {
@@ -151,6 +155,7 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     c := session.DB("person_info").C("behavior_log")
+    bulk := c.Bulk()
     for i, fields := range data {
         log.Println(i,fields)
         mac := fields["MAC"]
@@ -168,9 +173,10 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
         lng, lat = data_file.Bd09towgs84(lng, lat)
         if saveToDB {
             //c.Insert(fields)
-            c.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
+            bulk.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
         }
     }
+    bulk.Run()
 }
 
 func SaveVirtualID(orgcode string, data []map[string]string) {
@@ -204,7 +210,6 @@ func ProcDir(dirPath string)  {
         }
         files = append(files, f.Name())
     }
-    var waitgroup sync.WaitGroup
     for _, fileName := range files {
         log.Println("start proc", fileName)
         filePath := dirPath + PthSep + fileName
@@ -226,15 +231,13 @@ func ProcDir(dirPath string)  {
             log.Println("parse", bcpFile.Meta.FileName, orgCode)
             //PrintData(bcpFile.Fields)
            // PrintData(bcpFile.KeyFields)
-            waitgroup.Add(1)
-            go ProcContent(&waitgroup, orgCode, &bcpFile)
+            ProcContent(orgCode, &bcpFile)
         }
         os.Remove(filePath)
     }
-    waitgroup.Wait()
 }
 
-func ProcContent(waitgroup *sync.WaitGroup, orgCode string, bcpFile * data_file.BCPFile)  {
+func ProcContent(orgCode string, bcpFile * data_file.BCPFile)  {
     if strings.Contains(bcpFile.Meta.FileName, "WA_BASIC_FJ_0003") {
         UpdateApData(orgCode, bcpFile.Fields)
     } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
@@ -246,7 +249,6 @@ func ProcContent(waitgroup *sync.WaitGroup, orgCode string, bcpFile * data_file.
     } else {
 
     }
-    waitgroup.Done()
 }
 
 func GetNumber(m bson.M, key string) float64 {
