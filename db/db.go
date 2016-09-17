@@ -15,6 +15,7 @@ func InitDB()  {
     }
     session.SetMode(mgo.Monotonic, true)
     log.Println("connect to db succ")
+    session.DB("feature").C("feature_set").EnsureIndexKey("feature.value", "feature.type")
 }
 
 

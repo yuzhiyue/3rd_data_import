@@ -13,6 +13,7 @@ import (
     "unicode"
     "3rd_data_import/db"
     "3rd_data_import/export"
+    "3rd_data_import/data_import"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -82,16 +83,34 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
         log.Println(i,": mac", mac, "ap_mac", ap_mac, "auth_type", authType, "account", authAccount, "time", time)
 
         if saveToDB {
+            f1 := data_import.Feature{}
+            f2 := data_import.Feature{}
+            f1.Type = "99"
+            f1.Value = mac
+            f1.OrgCode = orgcode
+            f1.Time = uint32(time)
             if authType == "1020004" {
+                f2.Type = "02"
+                f2.Value = authAccount
+                f2.OrgCode = orgcode
+                f2.Time = uint32(time)
                 c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
             } else if authType == "1029999" {
                 if isPhoneNo(authAccount) {
+                    f2.Type = "02"
+                    f2.Value = authAccount
+                    f2.OrgCode = orgcode
+                    f2.Time = uint32(time)
                     c.Upsert(bson.M{"mac":mac, "phone":authAccount}, bson.M{"mac":mac, "phone":authAccount, "org_code":orgcode, "time":uint32(time)})
                 }
+            } else {
+                continue;
             }
+            data_import.SaveFeature(f1, f2)
         }
     }
 }
+
 
 func SaveTraceInfo(orgcode string, data []map[string]string)  {
     log.Println("SaveTraceInfo")
@@ -139,6 +158,18 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
             //c.Insert(fields)
             c.Insert(bson.M{"mac": mac, "dst_ip":Ip, "dst_port":port, "longitude":lng, "latitude": lat, "org_code":orgcode, "time":uint32(time)})
         }
+    }
+}
+
+func SaveVirtualID(orgcode string, data []map[string]string) {
+    log.Println("SaveVirtualID")
+    c := db.GetDBSession().DB("person_info").C("mac")
+    for _, fields := range data {
+        authType := fields["B040021"]
+        authAccount := fields["B040022"]
+        virtualType := fields["B040003"]
+        virtualID := fields["B040001"]
+        mac := fields["C040002"]
     }
 }
 
