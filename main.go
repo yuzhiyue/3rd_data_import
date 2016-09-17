@@ -196,7 +196,7 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
         mac := fields["C040002"]
         mac = filterMac(mac)
         time, err := strconv.Atoi(fields["H010015"])
-        if err {
+        if err != nil {
             continue
         }
         fAuth := data_import.Feature{}
