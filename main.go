@@ -221,24 +221,31 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
+        var waitgroup sync.WaitGroup
         for _, bcpFile := range zipFile.BCPFiles {
             log.Println("parse", bcpFile.Meta.FileName, orgCode)
-            PrintData(bcpFile.Fields)
-            PrintData(bcpFile.KeyFields)
-            if strings.Contains(bcpFile.Meta.FileName, "WA_BASIC_FJ_0003") {
-                UpdateApData(orgCode, bcpFile.Fields)
-            } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
-                SaveTraceInfo(orgCode, bcpFile.Fields)
-            } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
-                SaveDeviceInfo(orgCode, bcpFile.Fields)
-            }else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
-                SaveBehaviorLog(orgCode, bcpFile.Fields)
-            } else {
-
-            }
+            //PrintData(bcpFile.Fields)
+           // PrintData(bcpFile.KeyFields)
+            go ProcContent(&waitgroup, orgCode, &bcpFile)
         }
+        waitgroup.Done()
         os.Remove(filePath)
     }
+}
+
+func ProcContent(waitgroup sync.WaitGroup, orgCode string, bcpFile * data_file.BCPFile)  {
+    if strings.Contains(bcpFile.Meta.FileName, "WA_BASIC_FJ_0003") {
+        UpdateApData(orgCode, bcpFile.Fields)
+    } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
+        SaveTraceInfo(orgCode, bcpFile.Fields)
+    } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0001") {
+        SaveDeviceInfo(orgCode, bcpFile.Fields)
+    }else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
+        SaveBehaviorLog(orgCode, bcpFile.Fields)
+    } else {
+
+    }
+    waitgroup.Done()
 }
 
 func GetNumber(m bson.M, key string) float64 {

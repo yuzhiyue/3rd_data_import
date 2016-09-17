@@ -36,6 +36,7 @@ func GetDBSession() *mgo.Session {
     sessionNum++
     newSession := session.Clone()
     sessionNumLocker.Unlock()
+    log.Println("GetDBSession: current session num ", sessionNum)
     return newSession
 }
 
@@ -44,6 +45,7 @@ func ReleaseDBSession( session * mgo.Session)  {
     session.Close();
     sessionNum--
     sessionNumLocker.Unlock()
+    log.Println("ReleaseDBSession: current session num ", sessionNum)
 }
 
 
