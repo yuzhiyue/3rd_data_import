@@ -7,6 +7,7 @@ import (
     "io/ioutil"
     "strings"
     "strconv"
+    "errors"
 )
 
 type Item struct {
@@ -64,6 +65,9 @@ func (self *DataFile)Load(path string) error {
         } else {
             fileMap[f.FileInfo().Name()] = f
         }
+    }
+    if xmlFile == nil {
+        return errors.New("xmlFile is nil")
     }
     fileXml, err := xmlFile.Open()
     defer fileXml.Close()
