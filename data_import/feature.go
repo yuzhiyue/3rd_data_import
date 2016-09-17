@@ -3,6 +3,7 @@ package data_import
 import (
     "3rd_data_import/db"
     "gopkg.in/mgo.v2/bson"
+    "sync"
 )
 
 type Feature struct {
@@ -12,7 +13,7 @@ type Feature struct {
     Time uint32
 }
 
-func SaveFeature(f1 Feature, f2 Feature) {
+func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     c := session.DB("feature").C("feature_set")
@@ -39,4 +40,5 @@ func SaveFeature(f1 Feature, f2 Feature) {
             bson.M{"type":f2.Type, "value":f2.Value, "org_code": f2.OrgCode, "time": f2.Time}}
         c.Insert(bson.M{"_id":bson.NewObjectId().Hex(), "feature":featureArr})
     }
+    waitgroup.Done()
 }

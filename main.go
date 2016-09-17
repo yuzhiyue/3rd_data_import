@@ -14,6 +14,7 @@ import (
     "3rd_data_import/db"
     "3rd_data_import/export"
     "3rd_data_import/data_import"
+    "sync"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -73,6 +74,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     c := session.DB("person_info").C("mac")
+    var waitgroup sync.WaitGroup
     for i, fields := range data {
         mac := fields["MAC"]
         mac = filterMac(mac)
@@ -110,9 +112,11 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
             } else {
                 continue;
             }
-            go data_import.SaveFeature(f1, f2)
+            waitgroup.Add(1)
+            go data_import.SaveFeature(&waitgroup, f1, f2)
         }
     }
+    waitgroup.Wait()
 }
 
 
