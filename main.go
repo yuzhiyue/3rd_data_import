@@ -92,7 +92,7 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
         if saveToDB {
             f1 := data_import.Feature{}
             f2 := data_import.Feature{}
-            f1.Type = "99"
+            f1.Type = "1020002"
             f1.Value = mac
             f1.OrgCode = orgcode
             f1.Time = uint32(time)
