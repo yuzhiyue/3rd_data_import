@@ -233,7 +233,7 @@ func ProcDir(dirPath string)  {
     }
 }
 
-func ProcContent(waitgroup sync.WaitGroup, orgCode string, bcpFile * data_file.BCPFile)  {
+func ProcContent(waitgroup *sync.WaitGroup, orgCode string, bcpFile * data_file.BCPFile)  {
     if strings.Contains(bcpFile.Meta.FileName, "WA_BASIC_FJ_0003") {
         UpdateApData(orgCode, bcpFile.Fields)
     } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_1001") {
