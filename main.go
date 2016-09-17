@@ -204,6 +204,7 @@ func ProcDir(dirPath string)  {
         }
         files = append(files, f.Name())
     }
+    var waitgroup sync.WaitGroup
     for _, fileName := range files {
         log.Println("start proc", fileName)
         filePath := dirPath + PthSep + fileName
@@ -221,16 +222,16 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
-        var waitgroup sync.WaitGroup
         for _, bcpFile := range zipFile.BCPFiles {
             log.Println("parse", bcpFile.Meta.FileName, orgCode)
             //PrintData(bcpFile.Fields)
            // PrintData(bcpFile.KeyFields)
+            waitgroup.Add(1)
             go ProcContent(&waitgroup, orgCode, &bcpFile)
         }
-        waitgroup.Done()
         os.Remove(filePath)
     }
+    waitgroup.Wait()
 }
 
 func ProcContent(waitgroup *sync.WaitGroup, orgCode string, bcpFile * data_file.BCPFile)  {
