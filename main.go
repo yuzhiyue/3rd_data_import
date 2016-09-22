@@ -191,8 +191,8 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
     for _, fields := range data {
         authType := fields["B040021"]
         authAccount := fields["B040022"]
-        virtualType := fields["B040003"]
-        virtualID := fields["B040001"]
+        virtualID := fields["B040003"]
+        virtualType := fields["B040001"]
         mac := fields["C040002"]
         mac = filterMac(mac)
         time, err := strconv.Atoi(fields["H010015"])
@@ -210,7 +210,7 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
                 continue
             }
         } else if authType == "1020002" {
-            fAuth.Value = filterMac(fAuth.Value)
+            fAuth.Value = filterMac(authAccount)
         } else {
             fAuth.Type = authType
             fAuth.Value = authAccount
