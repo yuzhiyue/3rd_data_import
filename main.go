@@ -210,6 +210,7 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
                 continue
             }
         } else if authType == "1020002" {
+            fAuth.Type = "1020002"
             fAuth.Value = filterMac(authAccount)
         } else {
             fAuth.Type = authType
@@ -230,6 +231,7 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
         fMac.Value = mac
         fMac.OrgCode = orgcode
         fMac.Time = uint32(time)
+        fMac.Type = "1020002"
         if authType == "1020002" {
             waitgroup.Add(1)
             go data_import.SaveFeature(&waitgroup, fMac, fVirtual)
