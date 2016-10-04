@@ -115,7 +115,12 @@ func SaveDeviceInfo(orgcode string, data []map[string]string)  {
                 }
             } else {
                 f2.Type = authType
-                f2.Value = authAccount
+                if f2.Type == "1020002" {
+                    f2.Value = filterMac(authAccount)
+                } else {
+                    f2.Value = authAccount
+                }
+
                 f2.OrgCode = orgcode
                 f2.Time = uint32(time)
             }
@@ -222,11 +227,7 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
         fVirtual.Type = virtualType
         fVirtual.OrgCode = orgcode
         fVirtual.Time = uint32(time)
-        if fVirtual.Type == "0000001104" {
-            fVirtual.Value = virtualID + "_" + orgcode
-        } else {
-            fVirtual.Value = virtualID
-        }
+        fVirtual.Value = virtualID
 
         fMac.Value = mac
         fMac.OrgCode = orgcode
