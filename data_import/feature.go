@@ -87,10 +87,10 @@ func SaveFeatureV2(f1 Feature, f2 Feature) error {
     oldFeature2 := Feature{}
     err1 := c.Find(bson.M{"value": f1.Value, "type": f1.Type}).One(&oldFeature1)
     err2 := c.Find(bson.M{"value": f2.Value, "type": f2.Type}).One(&oldFeature2)
-    if err1 {
+    if err1 != nil {
         f1.ID = bson.NewObjectId().Hex()
     }
-    if err2 {
+    if err2 != nil {
         f2.ID = bson.NewObjectId().Hex()
     }
 
