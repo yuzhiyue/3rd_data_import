@@ -73,7 +73,7 @@ func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) error{
         c.Insert(bson.M{"_id":bson.NewObjectId().Hex(), "feature":featureArr})
     }
 
-    SaveFeatureV2(f1, f2)
+    SaveFeatureV2(session, f1, f2)
     SaveFeatureLocker.Unlock()
     waitgroup.Done()
     return nil
