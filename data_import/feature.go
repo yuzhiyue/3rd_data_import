@@ -89,9 +89,16 @@ func SaveFeatureV2(f1 Feature, f2 Feature) error {
     err2 := c.Find(bson.M{"value": f2.Value, "type": f2.Type}).One(&oldFeature2)
     if err1 != nil {
         f1.ID = bson.NewObjectId().Hex()
+    } else {
+        f1.ID = oldFeature1.ID
+        f1.Relate = oldFeature1.Relate
     }
+
     if err2 != nil {
         f2.ID = bson.NewObjectId().Hex()
+    } else {
+        f2.ID = oldFeature2.ID
+        f2.Relate = oldFeature2.Relate
     }
 
     hasRelate := false
