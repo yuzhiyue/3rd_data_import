@@ -7,6 +7,7 @@ import (
     "errors"
     "log"
     "strings"
+    "gopkg.in/mgo.v2"
 )
 
 type FeatureRelate struct {
@@ -78,14 +79,11 @@ func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) error{
     return nil
 }
 
-func SaveFeatureV2(f1 Feature, f2 Feature) error {
+func SaveFeatureV2(session *mgo.Session, f1 Feature, f2 Feature) error {
     if f1.Type == f2.Type && f1.Value == f2.Value {
         log.Println("SaveFeature: f1 == f2")
         return errors.New("f1 == f2")
     }
-
-    session := db.GetDBSession()
-    defer db.ReleaseDBSession(session)
 
     c := session.DB("feature").C("feature")
     oldFeature1 := Feature{}
