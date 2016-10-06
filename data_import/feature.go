@@ -80,6 +80,7 @@ func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) error{
 
 func SaveFeatureV2(f1 Feature, f2 Feature) error {
     if f1.Type == f2.Type && f1.Value == f2.Value {
+        log.Println("SaveFeature: f1 == f2")
         return errors.New("f1 == f2")
     }
 
