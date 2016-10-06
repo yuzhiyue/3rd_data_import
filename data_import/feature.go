@@ -9,11 +9,18 @@ import (
     "strings"
 )
 
+type FeatureRelate struct {
+    Target string `json:"target" bson:"target"`
+    Count int `json:"count" bson:"count"`
+}
+
 type Feature struct {
-    Type string
-    Value string
-    OrgCode string
-    Time uint32
+    ID string `json:"id" bson:"_id"`
+    Type string `json:"type" bson:"type"`
+    Value string `json:"value" bson:"value"`
+    OrgCode string `json:"org_code" bson:"org_code"`
+    Time uint32 `json:"time" bson:"time"`
+    Relate []FeatureRelate `json:"relate" bson:"relate"`
 }
 
 var SaveFeatureLocker *sync.Mutex = new(sync.Mutex)
@@ -64,7 +71,56 @@ func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) error{
             bson.M{"type":f2.Type, "value":f2.Value, "org_code": f2.OrgCode, "time": f2.Time}}
         c.Insert(bson.M{"_id":bson.NewObjectId().Hex(), "feature":featureArr})
     }
+
+    SaveFeatureV2(f1, f2)
     SaveFeatureLocker.Unlock()
     waitgroup.Done()
+    return nil
+}
+
+func SaveFeatureV2(f1 Feature, f2 Feature) error {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+
+    c := session.DB("feature").C("feature")
+    oldFeature1 := Feature{}
+    oldFeature2 := Feature{}
+    err1 := c.Find(bson.M{"value": f1.Value, "type": f1.Type}).One(&oldFeature1)
+    err2 := c.Find(bson.M{"value": f2.Value, "type": f2.Type}).One(&oldFeature2)
+    if err1 {
+        f1.ID = bson.NewObjectId().Hex()
+    }
+    if err2 {
+        f2.ID = bson.NewObjectId().Hex()
+    }
+
+    hasRelate := false
+    for i := range f1.Relate {
+        r := & f1.Relate[i]
+        if r.Target == f2.ID {
+            hasRelate = true
+            r.Count++
+        }
+    }
+    if !hasRelate {
+        r := FeatureRelate{f2.ID, 1}
+        f1.Relate = append(f1.Relate, r)
+    }
+
+    hasRelate = false
+    for i := range f2.Relate {
+        r := & f2.Relate[i]
+        if r.Target == f1.ID {
+            hasRelate = true
+            r.Count++
+        }
+    }
+    if !hasRelate {
+        r := FeatureRelate{f1.ID, 1}
+        f2.Relate = append(f2.Relate, r)
+    }
+
+    c.UpsertId(f1.ID, f1)
+    c.UpsertId(f2.ID, f2)
     return nil
 }
