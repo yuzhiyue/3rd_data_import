@@ -79,6 +79,10 @@ func SaveFeature(waitgroup *sync.WaitGroup, f1 Feature, f2 Feature) error{
 }
 
 func SaveFeatureV2(f1 Feature, f2 Feature) error {
+    if f1.Type == f2.Type && f1.Value == f2.Value {
+        return nil
+    }
+
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
 
