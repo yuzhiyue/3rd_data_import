@@ -15,6 +15,8 @@ import (
     "3rd_data_import/export"
     "3rd_data_import/data_import"
     "sync"
+    "fmt"
+    "io"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -46,6 +48,9 @@ func UpdateApData(orgcode string, data []map[string]string)  {
         mac = filterMac(mac)
         lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
+        if orgcode == "779852855" {
+            lat, err2 = strconv.ParseFloat(fields["LAITTUDE"], 64)
+        }
         if err1 != nil || err2 != nil {
             continue
         }
@@ -176,6 +181,9 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
         port := fields["DST_PORT"]
         lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
+        if orgcode == "779852855" {
+            lat, err2 = strconv.ParseFloat(fields["LAITTUDE"], 64)
+        }
         time, err3 := strconv.Atoi(fields["CAPTURE_TIME"])
         if err1 != nil || err2 != nil || err3 != nil || err4 != nil{
             log.Println("error:", err1, err2, err3, err4)
@@ -248,6 +256,26 @@ func SaveVirtualID(orgcode string, data []map[string]string) {
     waitgroup.Wait()
 }
 
+func CopyFile(src,dst string)(w int64,err error){
+    srcFile,err := os.Open(src)
+    if err!=nil{
+        fmt.Println(err.Error())
+        return
+    }
+    defer srcFile.Close()
+
+    dstFile,err := os.Create(dst)
+
+    if err!=nil{
+        fmt.Println(err.Error())
+        return
+    }
+
+    defer dstFile.Close()
+
+    return io.Copy(dstFile,srcFile)
+}
+
 func ProcDir(dirPath string)  {
     files := make([]string, 0)
     dir, err := ioutil.ReadDir(dirPath)
@@ -284,12 +312,17 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
-        for _, bcpFile := range zipFile.BCPFiles {
-            log.Println("parse", bcpFile.Meta.FileName, orgCode)
-            PrintData(bcpFile.Fields)
-           // PrintData(bcpFile.KeyFields)
-            ProcContent(orgCode, &bcpFile)
+        if orgCode == "555400905" || orgCode == "779852855"{
+            for _, bcpFile := range zipFile.BCPFiles {
+                log.Println("parse", bcpFile.Meta.FileName, orgCode)
+                PrintData(bcpFile.Fields)
+                // PrintData(bcpFile.KeyFields)
+                ProcContent(orgCode, &bcpFile)
+            }
         }
+
+        os.MkdirAll("/home/detector/file_bak/" + orgCode, 0755)
+        CopyFile(filePath, "/home/detector/file_bak/" + orgCode + "/" + fileName)
         os.Remove(filePath)
     }
 }
@@ -304,6 +337,9 @@ func ProcContent(orgCode string, bcpFile * data_file.BCPFile)  {
     }else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
         SaveBehaviorLog(orgCode, bcpFile.Fields)
     } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0003") {
+        if orgCode != "555400905" {
+            return
+        }
         SaveVirtualID(orgCode, bcpFile.KeyFields)
     } else {
 
@@ -357,9 +393,9 @@ func main() {
         }
         log.SetOutput(logFile)
     }
-
+    db.InitDB()
     if saveToDB {
-        db.InitDB()
+        //db.InitDB()
         //export.ExportDetectorInfo()
         //export.ExportTrace()
         //return
