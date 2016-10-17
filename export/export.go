@@ -310,6 +310,8 @@ func ExportTrace() {
 
     outArr := make([]TraceInfo, 0)
     for _, e := range traceArr {
+        detectorDBInfo := DetectorDBInfo{}
+        session.DB("detector").C("detector_info").FindId(e.ApMac).One(&detectorDBInfo)
         ApMac := strings.ToUpper(e.ApMac[len(e.ApMac) - 12:])
         var trace TraceInfo
         trace.MAC = FormatMac(e.DeviceMac)
@@ -320,7 +322,7 @@ func ExportTrace() {
         trace.YPOINT = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         trace.DEVMAC = FormatMac(ApMac)
         trace.DEVICENUM = OrgCode + ApMac
-        trace.SERVICECODE = ServiceCode
+        trace.SERVICECODE = ServiceCodePrefix + fmt.Sprintf("%06d", detectorDBInfo.No)
         outArr = append(outArr, trace)
     }
 
