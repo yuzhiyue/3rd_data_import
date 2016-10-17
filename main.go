@@ -48,7 +48,7 @@ func UpdateApData(orgcode string, data []map[string]string)  {
         mac = filterMac(mac)
         lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
-        if orgcode == "779852855" {
+        if orgcode == "779852855" && err2 != nil {
             lat, err2 = strconv.ParseFloat(fields["LAITTUDE"], 64)
         }
         if err1 != nil || err2 != nil {
@@ -181,7 +181,7 @@ func SaveBehaviorLog(orgcode string, data []map[string]string)  {
         port := fields["DST_PORT"]
         lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
-        if orgcode == "779852855" {
+        if orgcode == "779852855" && err2 != nil {
             lat, err2 = strconv.ParseFloat(fields["LAITTUDE"], 64)
         }
         time, err3 := strconv.Atoi(fields["CAPTURE_TIME"])
