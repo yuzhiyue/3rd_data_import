@@ -344,7 +344,7 @@ func ProcDir(dirPath string)  {
             // PrintData(bcpFile.KeyFields)
             SaveRawData(&bcpFile)
             if orgCode == "555400905" || orgCode == "779852855"{
-            ProcContent(orgCode, &bcpFile)
+                ProcContent(orgCode, &bcpFile)
             }
 
         }
