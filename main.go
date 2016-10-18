@@ -17,6 +17,7 @@ import (
     "sync"
     "fmt"
     "io"
+    "3rd_data_import/stats"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -339,10 +340,9 @@ func ProcDir(dirPath string)  {
 
         for _, bcpFile := range zipFile.BCPFiles {
             log.Println("parse", bcpFile.Meta.FileName, orgCode)
-            PrintData(bcpFile.Fields)
+            //PrintData(bcpFile.Fields)
             // PrintData(bcpFile.KeyFields)
             SaveRawData(&bcpFile)
-            continue
             if orgCode == "555400905" || orgCode == "779852855"{
                 ProcContent(orgCode, &bcpFile)
             }
