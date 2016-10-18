@@ -17,7 +17,6 @@ import (
     "sync"
     "fmt"
     "io"
-    "3rd_data_import/stats"
 )
 
 func inet_ntoa(ipnr int64) string {
