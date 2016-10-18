@@ -21,6 +21,7 @@ func InitDB()  {
     log.Println("connect to db succ")
     session.DB("feature").C("feature_set").EnsureIndexKey("feature.value", "feature.type")
     session.DB("feature").C("feature").EnsureIndexKey("value", "type")
+    session.DB("3rd_data").C("raw_data").EnsureIndexKey("org_code", "type")
 }
 
 
