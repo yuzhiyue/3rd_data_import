@@ -17,6 +17,7 @@ import (
     "sync"
     "fmt"
     "io"
+    "3rd_data_import/stats"
 )
 
 func inet_ntoa(ipnr int64) string {
@@ -37,6 +38,30 @@ func PrintData(data []map[string]string)  {
 
 func filterMac(mac string) string {
     return strings.ToLower(strings.Replace(strings.Replace(mac, "-", "", -1), ":", "", -1))
+}
+
+
+type RawData struct  {
+    OrgCode string `bson:"org_code"`
+    Type string `bson:"type"`
+    Fields [] data_file.Field `bson:"fields"`
+}
+
+func SaveRawData(data * data_file.BCPFile)  {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    c := session.DB("3rd_data").C("raw_data")
+    bulk := c.Bulk()
+    orgCode := data.Meta.OrgCode
+    dataType := data.Meta.DataType
+    for _, fields := range data.RawData {
+        RawData := RawData{}
+        RawData.OrgCode = orgCode
+        RawData.Type = dataType
+        RawData.Fields = fields
+        bulk.Insert(RawData)
+    }
+    bulk.Run()
 }
 
 func UpdateApData(orgcode string, data []map[string]string)  {
@@ -312,13 +337,17 @@ func ProcDir(dirPath string)  {
             continue
         }
         orgCode := fileNameSplited[1]
-        if orgCode == "555400905" || orgCode == "779852855"{
-            for _, bcpFile := range zipFile.BCPFiles {
-                log.Println("parse", bcpFile.Meta.FileName, orgCode)
-                PrintData(bcpFile.Fields)
-                // PrintData(bcpFile.KeyFields)
+
+        for _, bcpFile := range zipFile.BCPFiles {
+            log.Println("parse", bcpFile.Meta.FileName, orgCode)
+            PrintData(bcpFile.Fields)
+            // PrintData(bcpFile.KeyFields)
+            SaveRawData(&bcpFile)
+            continue
+            if orgCode == "555400905" || orgCode == "779852855"{
                 ProcContent(orgCode, &bcpFile)
             }
+
         }
 
         os.MkdirAll("/home/detector/file_bak/" + orgCode, 0755)
@@ -394,6 +423,9 @@ func main() {
         log.SetOutput(logFile)
     }
     db.InitDB()
+    //stats.StatsImport("779852855")
+    //stats.StatsImport("555400905")
+    //return
     if saveToDB {
         //db.InitDB()
         //export.ExportDetectorInfo()

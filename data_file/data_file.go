@@ -37,13 +37,22 @@ type FileMeta struct {
     StartLine int
     Path string
     FileName string
+    OrgCode string
+    DataType string
     Fields []Item
+}
+
+type Field struct {
+    Key string `bson:"key"`
+    Name string `bson:"name"`
+    Value string `bson:"value"`
 }
 
 type BCPFile struct {
     Meta FileMeta
     Fields []map[string]string
     KeyFields []map[string]string
+    RawData [][]Field
 }
 
 type DataFile struct {
@@ -105,6 +114,7 @@ func (self *DataFile)Load(path string) error {
             fieldIdx := 0
             fields := make(map[string] string)
             keyFields := make(map[string] string)
+            rawFields := make([]Field, 0)
             for i, c := range line {
                 if int(c) == int('\t') || i == len(line) - 1{
                     if inWord {
@@ -113,6 +123,11 @@ func (self *DataFile)Load(path string) error {
                         key := bcpFile.Meta.Fields[fieldIdx].Key
                         fields[name] = val
                         keyFields[key] = val
+                        field := Field{}
+                        field.Key = key
+                        field.Name = name
+                        field.Value = val
+                        rawFields = append(rawFields, field)
                     }
                     inWord = false
                     fieldIdx++
@@ -128,6 +143,9 @@ func (self *DataFile)Load(path string) error {
             }
             if len(keyFields) != 0 {
                 bcpFile.KeyFields = append(bcpFile.KeyFields, keyFields)
+            }
+            if len(rawFields) != 0 {
+                bcpFile.RawData = append(bcpFile.RawData, rawFields)
             }
         }
     }
@@ -159,6 +177,12 @@ func (self * DataFile)Decode(xmlContent []byte) error {
             case "I010038": {
                 file.Meta.StartLine,_ = strconv.Atoi(item.Val);
                 break;
+            }
+            case "A010004": {
+                file.Meta.DataType = item.Val
+            }
+            case "G020013": {
+                file.Meta.OrgCode = item.Val
             }
             }
         }
