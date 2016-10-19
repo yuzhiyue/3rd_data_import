@@ -442,6 +442,9 @@ func main() {
         } else if os.Args[1] == "export_trace" {
             export.ExportTrace()
             return
+        } else if os.Args[1] == "export_service_status" {
+            export.ExportServiceStatus()
+            return
         }
     }
 

@@ -70,6 +70,19 @@ type ServiceInfo struct {
     CAP_TYPE string
 }
 
+type ServiceStatus struct {
+    SERVICE_CODE string
+    SERVICE_ONLINE_STATUS int
+    DATA_ONLINE_STATUS int
+    EQUIPMENT_RUNNING_STATUS int
+    ACTIVE_PC int
+    REPORT_PC int
+    ONLINE_PERSON int
+    VITRUAL_NUM int
+    EXIT_IP string
+    UPDATE_TIME string
+}
+
 type DetectorDBInfo struct {
     Mac string `bson:"_id"`
     No int `bson:"no"`
@@ -241,6 +254,48 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
     serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
     serviceInfo.CAP_TYPE = "1"
     return serviceInfo
+}
+
+func ExportServiceStatus()  {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    detectorArr := make([]DetectorDBInfo, 0)
+    err := session.DB("detector").C("detector_info").Find(bson.M{"company":"01"}).All(&detectorArr)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+
+    outServiceStatusArr := make([]ServiceStatus, 0)
+    for _, e := range detectorArr {
+        if len(e.Mac) < 12 {
+            continue
+        }
+
+        serviceStatus := ServiceStatus{}
+        serviceStatus.SERVICE_CODE = ServiceCodePrefix + fmt.Sprintf("%06d", e.No)
+        serviceStatus.SERVICE_ONLINE_STATUS = 1
+        if e.Latitude != 0 {
+            serviceStatus.DATA_ONLINE_STATUS = 1
+            serviceStatus.EQUIPMENT_RUNNING_STATUS = 1
+        } else {
+            serviceStatus.DATA_ONLINE_STATUS = 2
+            serviceStatus.EQUIPMENT_RUNNING_STATUS = 2
+        }
+        serviceStatus.ACTIVE_PC = 0
+        serviceStatus.REPORT_PC = 0
+        serviceStatus.ONLINE_PERSON = 0
+        serviceStatus.VITRUAL_NUM = 0
+        serviceStatus.EXIT_IP = "0.0.0.0"
+        serviceStatus.UPDATE_TIME = time.Now().Format("2006-01-02 15:04:05")
+        outServiceStatusArr = append(outServiceStatusArr, serviceStatus)
+    }
+    jsonString, err := json.Marshal(outServiceStatusArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "009")
 }
 
 func  ExportDetectorInfo() {
