@@ -1,0 +1,56 @@
+package protocol
+
+type ServiceInfo struct {
+    SERVICE_CODE string
+    SERVICE_NAME string
+    ADDRESS string
+    ZIP string
+    BUSINESS_NATURE string
+    PRINCIPAL string
+    PRINCIPAL_TEL string
+    INFOR_MAN string
+    INFOR_MAN_TEL string
+    INFOR_MAN_EMAIL string
+    PRODUCER_CODE string
+    STATUS int
+    ENDING_NUMBER int
+    SERVER_NUMBER int
+    EXIT_IP string
+    AUTH_ACCOUNT string
+    NET_TYPE string
+    PRACTITIONER_NUMBER int
+    NET_MONITOR_DEPARTMENT string
+    NET_MONITOR_MAN string
+    NET_MONITOR_MAN_TEL string
+    REMARK string
+    SERVICE_TYPE int
+    PROVINCE_CODE string
+    CITY_CODE string
+    AREA_CODE string
+    CITY_TYPE string
+    POLICE_CODE string
+    MAIL_ACCOUNT string
+    MOBILE_ACCOUNT string
+    XPOINT string
+    YPOINT string
+    GIS_XPOINT string
+    GIS_YPOINT  string
+    TERMINAL_FACTORY_ORGCODE  string
+    ORG_CODE string
+    IP_TYPE string
+    BAND_WIDTH int
+    NET_LAN int
+    NET_LAN_TERMINAL int
+    IS_SAFE string
+    WIFI_TERMINAL int
+    PRINCIPAL_CERT_TYPE string
+    PRINCIPAL_CERT_CODE string
+    PERSON_NAME string
+    PERSON_TEL string
+    PERSON_QQ string
+    INFOR_MAN_QQ string
+    START_TIME string
+    END_TIME string
+    CREATE_TIME string
+    CAP_TYPE string
+}
