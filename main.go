@@ -338,7 +338,7 @@ func ProcDir(dirPath string)  {
         orgCode := fileNameSplited[1]
 
         for _, bcpFile := range zipFile.BCPFiles {
-            log.Println("parse", bcpFile.Meta.FileName, orgCode)
+            log.Println("parse", fileName, bcpFile.Meta.FileName, orgCode)
             //PrintData(bcpFile.Fields)
             // PrintData(bcpFile.KeyFields)
             SaveRawData(&bcpFile)
