@@ -5,6 +5,7 @@ import (
     "log"
     "runtime"
     "sync"
+    "gopkg.in/mgo.v2/bson"
 )
 
 var session *mgo.Session;
@@ -24,7 +25,21 @@ func InitDB()  {
     session.DB("3rd_data").C("raw_data").EnsureIndexKey("org_code", "type")
 }
 
-
+func GetNumber(m bson.M, key string) float64 {
+    v := m[key]
+    if v == nil {
+        return 0
+    }
+    switch v.(type) {
+    case float64:
+        return v.(float64)
+    case float32:
+        return float64(v.(float32))
+    case int:
+        return float64(v.(int))
+    }
+    return 0
+}
 
 func GetDBSession() *mgo.Session {
     for ;; {

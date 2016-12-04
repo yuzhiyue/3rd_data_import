@@ -1,56 +1,58 @@
 package protocol
-
 type ServiceInfo struct {
-    SERVICE_CODE string
-    SERVICE_NAME string
-    ADDRESS string
-    ZIP string
-    BUSINESS_NATURE string
-    PRINCIPAL string
-    PRINCIPAL_TEL string
-    INFOR_MAN string
-    INFOR_MAN_TEL string
-    INFOR_MAN_EMAIL string
-    PRODUCER_CODE string
-    STATUS int
-    ENDING_NUMBER int
-    SERVER_NUMBER int
-    EXIT_IP string
-    AUTH_ACCOUNT string
-    NET_TYPE string
-    PRACTITIONER_NUMBER int
-    NET_MONITOR_DEPARTMENT string
-    NET_MONITOR_MAN string
-    NET_MONITOR_MAN_TEL string
-    REMARK string
-    SERVICE_TYPE int
-    PROVINCE_CODE string
-    CITY_CODE string
-    AREA_CODE string
-    CITY_TYPE string
-    POLICE_CODE string
-    MAIL_ACCOUNT string
-    MOBILE_ACCOUNT string
-    XPOINT string
-    YPOINT string
-    GIS_XPOINT string
-    GIS_YPOINT  string
-    TERMINAL_FACTORY_ORGCODE  string
-    ORG_CODE string
-    IP_TYPE string
-    BAND_WIDTH int
-    NET_LAN int
-    NET_LAN_TERMINAL int
-    IS_SAFE string
-    WIFI_TERMINAL int
-    PRINCIPAL_CERT_TYPE string
-    PRINCIPAL_CERT_CODE string
-    PERSON_NAME string
-    PERSON_TEL string
-    PERSON_QQ string
-    INFOR_MAN_QQ string
-    START_TIME string
-    END_TIME string
-    CREATE_TIME string
-    CAP_TYPE string
+    ID string                         `bson: "id"`
+    NO string                         `bson: "no"`
+    SERVICE_CODE string               `bson: "service_code"`
+    NETBAR_WACODE string              `bson: "netbar_wacode"`
+    SERVICE_NAME string               `bson: "service_name"`
+    ADDRESS string                    `bson: "address"`
+    ZIP string                        `bson: "zip"`
+    BUSINESS_NATURE string            `bson: "business_nature"`
+    PRINCIPAL string                  `bson: "principal"`
+    PRINCIPAL_TEL string              `bson: "principal_tel"`
+    INFOR_MAN string                  `bson: "infor_man"`
+    INFOR_MAN_TEL string              `bson: "infor_man_tel"`
+    INFOR_MAN_EMAIL string            `bson: "infor_man_email"`
+    PRODUCER_CODE string              `bson: "producer_code"`
+    STATUS int                        `bson: "statusint"`
+    ENDING_NUMBER int                 `bson: "ending_numberint"`
+    SERVER_NUMBER int                 `bson: "server_numberint"`
+    EXIT_IP string                    `bson: "exit_ip"`
+    AUTH_ACCOUNT string               `bson: "auth_account"`
+    NET_TYPE string                   `bson: "net_type"`
+    PRACTITIONER_NUMBER int           `bson: "practitioner_numberint"`
+    NET_MONITOR_DEPARTMENT string     `bson: "net_monitor_department"`
+    NET_MONITOR_MAN string            `bson: "net_monitor_man"`
+    NET_MONITOR_MAN_TEL string        `bson: "net_monitor_man_tel"`
+    REMARK string                     `bson: "remark"`
+    SERVICE_TYPE int                  `bson: "service_typeint"`
+    PROVINCE_CODE string              `bson: "province_code"`
+    CITY_CODE string                  `bson: "city_code"`
+    AREA_CODE string                  `bson: "area_code"`
+    CITY_TYPE string                  `bson: "city_type"`
+    POLICE_CODE string                `bson: "police_code"`
+    MAIL_ACCOUNT string               `bson: "mail_account"`
+    MOBILE_ACCOUNT string             `bson: "mobile_account"`
+    XPOINT string                     `bson: "xpoint"`
+    YPOINT string                     `bson: "ypoint"`
+    GIS_XPOINT string                 `bson: "gis_xpoint"`
+    GIS_YPOINT  string                `bson: "gis_ypoint"`
+    TERMINAL_FACTORY_ORGCODE  string  `bson: "terminal_factory_orgcode"`
+    ORG_CODE string                   `bson: "org_code"`
+    IP_TYPE string                    `bson: "ip_type"`
+    BAND_WIDTH int                    `bson: "band_widthint"`
+    NET_LAN int                       `bson: "net_lanint"`
+    NET_LAN_TERMINAL int              `bson: "net_lan_terminalint"`
+    IS_SAFE string                    `bson: "is_safe"`
+    WIFI_TERMINAL int                 `bson: "wifi_terminalint"`
+    PRINCIPAL_CERT_TYPE string        `bson: "principal_cert_type"`
+    PRINCIPAL_CERT_CODE string        `bson: "principal_cert_code"`
+    PERSON_NAME string                `bson: "person_name"`
+    PERSON_TEL string                 `bson: "person_tel"`
+    PERSON_QQ string                  `bson: "person_qq"`
+    INFOR_MAN_QQ string               `bson: "infor_man_qq"`
+    START_TIME string                 `bson: "start_time"`
+    END_TIME string                   `bson: "end_time"`
+    CREATE_TIME string                `bson: "create_time"`
+    CAP_TYPE string                   `bson: "cap_type"`
 }
