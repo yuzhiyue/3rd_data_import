@@ -269,7 +269,7 @@ func ExportServiceFromDB() {
     }
     for i := range serviceArr {
         service := &serviceArr[i]
-        service.SERVICE_CODE = service.SERVICE_CODE[:8] + fmt.Sprintf("%06d", service.NO)
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", service.NO)
 
         serviceStatus := ServiceStatus{}
         serviceStatus.SERVICE_CODE = service.SERVICE_CODE
