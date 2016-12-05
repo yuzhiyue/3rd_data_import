@@ -438,7 +438,7 @@ func main() {
         path := os.Args[2]
         export.OutPath = path
         if os.Args[1] == "export_service" {
-            export.ExportServiceFromDB()
+            export.ExportServiceFromDB(false)
             return
         } else if os.Args[1] == "export_detector" {
             export.ExportDetectorInfo()
@@ -448,6 +448,7 @@ func main() {
             return
         } else if os.Args[1] == "export_service_status" {
             export.ExportServiceStatus()
+            export.ExportServiceFromDB(true)
             return
         }
     }

@@ -257,7 +257,7 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
     return serviceInfo
 }
 
-func ExportServiceFromDB() {
+func ExportServiceFromDB(onlyStatus bool) {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
     serviceArr := make([]protocol.ServiceInfo, 0)
@@ -285,14 +285,17 @@ func ExportServiceFromDB() {
         serviceStatus.UPDATE_TIME = time.Now().Format("2006-01-02 15:04:05")
         outServiceStatusArr = append(outServiceStatusArr, serviceStatus)
     }
-    jsonString, err := json.Marshal(serviceArr)
-    if err != nil {
-        return
-    }
-    log.Print(string(jsonString))
-    SaveFile(string(jsonString), "008")
 
-    jsonString, err = json.Marshal(outServiceStatusArr)
+    if !onlyStatus {
+        jsonString, err := json.Marshal(serviceArr)
+        if err != nil {
+            return
+        }
+        log.Print(string(jsonString))
+        SaveFile(string(jsonString), "008")
+    }
+
+    jsonString, err := json.Marshal(outServiceStatusArr)
     if err != nil {
         return
     }
