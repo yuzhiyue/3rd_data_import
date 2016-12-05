@@ -13,6 +13,7 @@ import (
     "fmt"
     "io/ioutil"
     "net/http"
+    "3rd_data_import/protocol"
 )
 
 type ServiceInfo struct {
@@ -254,6 +255,48 @@ func ExportService(no int, lng float64, lat float64) ServiceInfo {
     serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
     serviceInfo.CAP_TYPE = "1"
     return serviceInfo
+}
+
+func ExportServiceFromDB() {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    serviceArr := make([]protocol.ServiceInfo, 0)
+    outServiceStatusArr := make([]ServiceStatus, 0)
+    err := session.DB("platform").C("service").Find(bson.M{}).All(&serviceArr)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+    for i := range serviceArr {
+        service := &serviceArr[i]
+        service.SERVICE_CODE = service.SERVICE_CODE[:8] + fmt.Sprintf("%06d", service.NO)
+
+        serviceStatus := ServiceStatus{}
+        serviceStatus.SERVICE_CODE = service.SERVICE_CODE
+        serviceStatus.SERVICE_ONLINE_STATUS = 1
+        serviceStatus.DATA_ONLINE_STATUS = 1
+        serviceStatus.EQUIPMENT_RUNNING_STATUS = 1
+        serviceStatus.ACTIVE_PC = 0
+        serviceStatus.REPORT_PC = 0
+        serviceStatus.ONLINE_PERSON = 0
+        serviceStatus.VITRUAL_NUM = 0
+        serviceStatus.EXIT_IP = "0.0.0.0"
+        serviceStatus.UPDATE_TIME = time.Now().Format("2006-01-02 15:04:05")
+        outServiceStatusArr = append(outServiceStatusArr, serviceStatus)
+    }
+    jsonString, err := json.Marshal(serviceArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "008")
+
+    jsonString, err = json.Marshal(outServiceStatusArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "009")
 }
 
 func ExportServiceStatus()  {
