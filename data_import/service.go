@@ -7,6 +7,7 @@ import (
     "gopkg.in/mgo.v2/bson"
     "gopkg.in/mgo.v2"
     "strconv"
+    "fmt"
 )
 
 func CreateServiceNo() (int, error) {
@@ -46,8 +47,11 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
         serviceInfo.AREA_CODE = serviceInfo.NETBAR_WACODE[:6]
         serviceInfo.ADDRESS = fields["G020017"]
         serviceInfo.ORG_CODE = orgCode
-        serviceInfo.XPOINT = fields["F010016"]
-        serviceInfo.YPOINT = fields["F010017"]
+        lng, _ := strconv.ParseFloat(fields["F010016"], 64)
+        lat, _ := strconv.ParseFloat(fields["F010017"], 64)
+        lng, lat = data_file.Bd09towgs84(lng, lat)
+        serviceInfo.XPOINT = fmt.Sprintf("%.6f", lng)
+        serviceInfo.YPOINT = fmt.Sprintf("%.6f", lat)
         serviceInfo.CREATE_TIME = "2016-07-02 00:00:00"
         serviceInfo.CAP_TYPE = "2"
 
