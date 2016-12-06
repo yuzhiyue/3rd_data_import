@@ -34,7 +34,7 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
         serviceInfo := protocol.ServiceInfo{}
         serviceInfo.NETBAR_WACODE = fields["G020004"]
         serviceInfo.ID = orgCode + "_" + serviceInfo.NETBAR_WACODE
-        serviceInfo.SERVICE_NAME = fields["G020017"]
+        serviceInfo.SERVICE_NAME = fields["F040002"]
         serviceInfo.PRINCIPAL = fields["E020001"]
         serviceInfo.PERSON_NAME = fields["E020001"]
         serviceInfo.PERSON_TEL = fields["B070003"]
