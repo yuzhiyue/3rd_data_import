@@ -56,7 +56,7 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
         serviceInfo.CAP_TYPE = "2"
 
         serviceInfoOld := protocol.ServiceInfo{}
-        err := session.DB("platform").C("service").FindId(serviceInfo.ID).One(&serviceInfoOld)
+        err := session.DB("platform").C("service").Find(bson.M{"id":serviceInfo.ID}).One(&serviceInfoOld)
         if err != nil {
             no, err := CreateServiceNo()
             serviceInfo.NO = strconv.Itoa(no)
@@ -66,7 +66,7 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
             session.DB("platform").C("service").Insert(serviceInfo)
         } else {
             serviceInfo.NO = serviceInfoOld.NO
-            session.DB("platform").C("service").UpdateId(serviceInfo, serviceInfo)
+            session.DB("platform").C("service").Update(bson.M{"id":serviceInfo.ID}, serviceInfo)
         }
     }
 }

@@ -418,7 +418,7 @@ func  ExportAPInfo() {
             continue
         }
         service := protocol.ServiceInfo{}
-        err := session.DB("platform").C("service").FindId(e.OrgCode+"_"+e.NetbarWacode).One(&service)
+        err := session.DB("platform").C("service").Find(bson.M{"id":e.OrgCode+"_"+e.NetbarWacode}).One(&service)
         if err != nil {
             continue
         }
@@ -471,7 +471,7 @@ func ExportAPTrace() {
             continue
         }
         service := protocol.ServiceInfo{}
-        err := session.DB("platform").C("service").FindId(e.OrgCode+"_"+e.NetbarWacode).One(&service)
+        err := session.DB("platform").C("service").Find(bson.M{"id":e.OrgCode+"_"+e.NetbarWacode}).One(&service)
         if err != nil {
             continue
         }
