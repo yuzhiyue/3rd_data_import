@@ -454,6 +454,61 @@ func  ExportAPInfo() {
     SaveFile(string(jsonString), "010")
 }
 
+
+func ExportAPTrace() {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    detectorArr := make([]DetectorDBInfo, 0)
+    err := session.DB("detector").C("detector_info").Find(bson.M{"company":"02"}).All(&detectorArr)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+
+    outArr := make([]TraceInfo, 0)
+    for _, e := range detectorArr {
+        if len(e.Mac) < 12 {
+            continue
+        }
+        service := protocol.ServiceInfo{}
+        err := session.DB("platform").C("service").FindId(e.OrgCode+"_"+e.NetbarWacode).One(&service)
+        if err != nil {
+            continue
+        }
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", service.NO)
+        traceArr := make([]TraceDBInfo, 0)
+        err = session.DB("detector").C("detector_report").Find(bson.M{"ap_mac":e.Mac}).Sort("-time").Limit(5).All(&traceArr)
+        if err != nil {
+            log.Println(err)
+            return
+        }
+
+        for _, e := range traceArr {
+            detectorDBInfo := DetectorDBInfo{}
+            session.DB("detector").C("detector_info").FindId(e.ApMac).One(&detectorDBInfo)
+            ApMac := strings.ToUpper(e.ApMac[len(e.ApMac) - 12:])
+            var trace TraceInfo
+            trace.MAC = FormatMac(e.DeviceMac)
+            trace.TYPE = 2
+            trace.START_TIME = e.Time
+            trace.BSSID = FormatMac(ApMac)
+            trace.XPOINT = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
+            trace.YPOINT = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
+            trace.DEVMAC = FormatMac(ApMac)
+            trace.DEVICENUM = OrgCode + ApMac
+            trace.SERVICECODE = service.SERVICE_CODE
+            outArr = append(outArr, trace)
+        }
+    }
+
+    jsonString, err := json.Marshal(outArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "001")
+}
+
 func ExportTrace() {
     session := db.GetDBSession()
     defer db.ReleaseDBSession(session)
