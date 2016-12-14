@@ -1,6 +1,6 @@
 package protocol
 type ServiceInfo struct {
-    ID string                         `bson: "id"`
+    ID string                         `bson: "_id"`
     NO string                         `bson: "no"`
     SERVICE_CODE string               `bson: "service_code"`
     NETBAR_WACODE string              `bson: "netbar_wacode"`
