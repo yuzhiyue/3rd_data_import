@@ -70,6 +70,7 @@ func UpdateApData(orgcode string, data []map[string]string)  {
     for i, fields := range data {
         mac := fields["AP_MAC"]
         mac = filterMac(mac)
+        netbar_wacode := fields["NETBAR_WACODE"]
         lng, err1 := strconv.ParseFloat(fields["LONGITUDE"], 64)
         lat, err2 := strconv.ParseFloat(fields["LATITUDE"], 64)
         if orgcode == "779852855" && err2 != nil {
@@ -81,7 +82,7 @@ func UpdateApData(orgcode string, data []map[string]string)  {
         lng, lat = data_file.Bd09towgs84(lng, lat)
         log.Println(i,": mac", mac, "lng", lng, "lat", lat)
         if saveToDB {
-            c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()), "company":"02", "org_code":orgcode})
+            c.UpsertId(mac, bson.M{"_id":mac, "longitude":lng, "latitude": lat, "last_active_time": uint32(time.Now().Unix()), "company":"02", "org_code":orgcode, "netbar_wacode":netbar_wacode})
         }
     }
 }
