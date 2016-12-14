@@ -480,7 +480,7 @@ func ExportAPTrace() {
         no,_ := strconv.Atoi(service.NO)
         service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", no)
         traceArr := make([]TraceDBInfo, 0)
-        err = session.DB("detector").C("detector_report").Find(bson.M{"ap_mac":e.Mac}).Sort("-time").Limit(5).All(&traceArr)
+        err = session.DB("detector").C("detector_report").Find(bson.M{"ap_mac":e.Mac}).Sort("-time").Limit(1).All(&traceArr)
         if err != nil {
             log.Println(err)
             return
