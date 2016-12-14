@@ -434,7 +434,7 @@ func  ExportAPInfo() {
         detector.PROVINCE_CODE = service.PROVINCE_CODE
         detector.CITY_CODE = service.CITY_CODE
         detector.AREA_CODE = service.AREA_CODE
-        detector.EQUIPMENT_TYPE = "10"
+        detector.EQUIPMENT_TYPE = "00"
         detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
         detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
         detector.CREATE_TIME = "2016-07-03 12:32:00"
