@@ -422,7 +422,7 @@ func  ExportAPInfo() {
         if err != nil {
             continue
         }
-        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", service.NO);
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", strconv.Atoi(service.NO));
         Mac := strings.ToUpper(e.Mac[len(e.Mac) - 12:])
         var detector DetectorInfo
         detector.MAC = FormatMac(Mac)
@@ -475,7 +475,7 @@ func ExportAPTrace() {
         if err != nil {
             continue
         }
-        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", service.NO)
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", strconv.Atoi(service.NO))
         traceArr := make([]TraceDBInfo, 0)
         err = session.DB("detector").C("detector_report").Find(bson.M{"ap_mac":e.Mac}).Sort("-time").Limit(5).All(&traceArr)
         if err != nil {
