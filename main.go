@@ -444,7 +444,10 @@ func main() {
         } else if os.Args[1] == "export_ap" {
             export.ExportAPInfo()
             return
-        }else if os.Args[1] == "export_detector" {
+        } else if os.Args[1] == "export_ap_trace" {
+            export.ExportAPTrace()
+            return
+        } else if os.Args[1] == "export_detector" {
             export.ExportDetectorInfo()
             return
         } else if os.Args[1] == "export_trace" {
