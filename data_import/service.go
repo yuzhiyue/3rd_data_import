@@ -19,7 +19,7 @@ func CreateServiceNo() (int, error) {
         Upsert: true,
     }
     doc := bson.M{}
-    _, err := session.DB("platfrom").C("ids").Find(bson.M{"_id": "detector_no"}).Apply(change, &doc)
+    _, err := session.DB("platform").C("ids").Find(bson.M{"_id": "service_no"}).Apply(change, &doc)
     if err == nil {
         no := int(db.GetNumber(doc, "value"))
         return no, nil
@@ -56,7 +56,7 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
         serviceInfo.CAP_TYPE = "2"
 
         serviceInfoOld := protocol.ServiceInfo{}
-        err := session.DB("platform").C("service").FindId(bson.M{"id":serviceInfo.ID}).One(&serviceInfoOld)
+        err := session.DB("platform").C("service").FindId(serviceInfo.ID).One(&serviceInfoOld)
         if err != nil {
             no, err := CreateServiceNo()
             serviceInfo.NO = strconv.Itoa(no)
@@ -66,7 +66,7 @@ func SaveServiceInfo(data * data_file.BCPFile)  {
             session.DB("platform").C("service").Insert(serviceInfo)
         } else {
             serviceInfo.NO = serviceInfoOld.NO
-            session.DB("platform").C("service").Upsert(bson.M{"id":serviceInfo.ID}, serviceInfo)
+            session.DB("platform").C("service").UpdateId(serviceInfo, serviceInfo)
         }
     }
 }
