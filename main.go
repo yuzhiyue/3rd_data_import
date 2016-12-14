@@ -441,7 +441,10 @@ func main() {
         if os.Args[1] == "export_service" {
             export.ExportServiceFromDB(false)
             return
-        } else if os.Args[1] == "export_detector" {
+        } else if os.Args[1] == "export_ap" {
+            export.ExportAPInfo()
+            return
+        }else if os.Args[1] == "export_detector" {
             export.ExportDetectorInfo()
             return
         } else if os.Args[1] == "export_trace" {

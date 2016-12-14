@@ -90,6 +90,8 @@ type DetectorDBInfo struct {
     Longitude float64 `bson:"longitude"`
     Latitude float64 `bson:"latitude"`
     Last_active_time uint32 `bson:"last_active_time"`
+    OrgCode string `bson:"org_code"`
+    NetbarWacode string `bson:"netbar_wacode"`
 }
 
 type TraceDBInfo struct {
@@ -398,6 +400,58 @@ func  ExportDetectorInfo() {
     }
     log.Print(string(jsonString))
     SaveFile(string(jsonString), "008")
+}
+
+func  ExportAPInfo() {
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    detectorArr := make([]DetectorDBInfo, 0)
+    err := session.DB("detector").C("detector_info").Find(bson.M{"company":"02"}).All(&detectorArr)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+
+    outArr := make([]DetectorInfo, 0)
+    for _, e := range detectorArr {
+        if len(e.Mac) < 12 {
+            continue
+        }
+        service := protocol.ServiceInfo{}
+        err := session.DB("platform").C("service").FindId(e.OrgCode+"_"+e.NetbarWacode).One(&service)
+        if err != nil {
+            continue
+        }
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", service.NO);
+        Mac := strings.ToUpper(e.Mac[len(e.Mac) - 12:])
+        var detector DetectorInfo
+        detector.MAC = FormatMac(Mac)
+        detector.EQUIPMENT_NUM = OrgCode + Mac
+        detector.EQUIPMENT_NAME = service.SERVICE_NAME + Mac[6:]
+        detector.SECURITY_FACTORY_ORGCODE = OrgCode
+        detector.SERVICE_CODE = service.SERVICE_CODE
+        detector.PROVINCE_CODE = service.PROVINCE_CODE
+        detector.CITY_CODE = service.CITY_CODE
+        detector.AREA_CODE = service.AREA_CODE
+        detector.EQUIPMENT_TYPE = "10"
+        detector.LATITUDE = strconv.FormatFloat(e.Latitude, 'f', 6, 64)
+        detector.LONGITUDE = strconv.FormatFloat(e.Longitude, 'f', 6, 64)
+        detector.CREATE_TIME = "2016-07-03 12:32:00"
+        detector.LAST_CONNECT_TIME = time.Now().Format("2006-01-02 15:04:05")
+        detector.WDA_VERSION = "1.10"
+        detector.FIRMWARE_VERSION = "1.0"
+        detector.COLLECTION_RADIUS = 150
+        detector.UPLOAD_TIME_INTERVAL = 60
+        detector.CREATER = service.PERSON_NAME
+        outArr = append(outArr, detector)
+    }
+
+    jsonString, err := json.Marshal(outArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "010")
 }
 
 func ExportTrace() {
