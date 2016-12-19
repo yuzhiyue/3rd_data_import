@@ -14,6 +14,7 @@ import (
     "io/ioutil"
     "net/http"
     "3rd_data_import/protocol"
+    "3rd_data_import/data_file"
 )
 
 type ServiceInfo struct {
@@ -546,6 +547,30 @@ func ExportTrace() {
     }
     log.Print(string(jsonString))
     SaveFile(string(jsonString), "001")
+}
+
+type RawData struct  {
+    OrgCode string `bson:"org_code"`
+    Type string `bson:"type"`
+    Fields [] data_file.Field `bson:"fields"`
+}
+
+func ExportDeviceInfo() {
+    rawData := make([]RawData, 0)
+    session := db.GetDBSession()
+    defer db.ReleaseDBSession(session)
+    err := session.DB("3rd_data").C("raw_data").Find(bson.M{"org_code":"555400905","type":"WA_SOURCE_FJ_0001"}).Sort("-_id").Limit(10).All(&rawData)
+    if err != nil {
+        log.Println(err)
+        return
+    }
+
+    fields := make(map[string]string)
+    for _, data := range rawData {
+        for _, e := range data.Fields{
+            fields[e.Key] = e.Value
+        }
+    }
 }
 
 func SaveFile(content string, typeCode string) {
