@@ -433,6 +433,8 @@ func main() {
         //export.ExportDetectorInfo()
         //export.ExportTrace()
         //return
+        export.ExportDeviceInfo()
+        return;
     }
 
     if len(os.Args) == 3 {
@@ -456,6 +458,9 @@ func main() {
         } else if os.Args[1] == "export_service_status" {
             export.ExportServiceStatus()
             export.ExportServiceFromDB(true)
+            return
+        } else if os.Args[1] == "export_device_info" {
+            export.ExportDeviceInfo()
             return
         }
     }

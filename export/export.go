@@ -555,6 +555,10 @@ type RawData struct  {
     Fields [] data_file.Field `bson:"fields"`
 }
 
+func filterMac(mac string) string {
+    return strings.ToLower(strings.Replace(strings.Replace(mac, "-", "", -1), ":", "", -1))
+}
+
 func ExportDeviceInfo() {
     rawData := make([]RawData, 0)
     session := db.GetDBSession()
@@ -565,12 +569,43 @@ func ExportDeviceInfo() {
         return
     }
 
-    fields := make(map[string]string)
+    outArr := make([]protocol.DeviceInfo, 0)
     for _, data := range rawData {
+        fields := make(map[string]string)
         for _, e := range data.Fields{
             fields[e.Key] = e.Value
         }
+        wc := fields["G020004"]
+        service := protocol.ServiceInfo{}
+        err := session.DB("platform").C("service").Find(bson.M{"id":data.OrgCode+"_"+wc}).One(&service)
+        if err != nil {
+            continue
+        }
+
+        no,_ := strconv.Atoi(service.NO)
+        service.SERVICE_CODE = service.NETBAR_WACODE[:8] + fmt.Sprintf("%06d", no)
+
+        deviceInfo := protocol.DeviceInfo{}
+        deviceInfo.SERVICE_CODE = service.SERVICE_CODE
+        tmp,_ := strconv.ParseUint(fields["H010015"],10,32)
+        deviceInfo.ONLINE_TIME = uint32(tmp)
+        deviceInfo.NET_ENDING_NAME = ""
+        tmp,_ = strconv.ParseUint(fields["F020001"],10,32)
+        deviceInfo.NET_ENDING_IP = uint32(tmp)
+        deviceInfo.NET_ENDING_MAC = fields["C040002"]
+        deviceInfo.SESSION_ID = fields["H010013"]
+        deviceInfo.AP_MAC = fields["F030011"]
+        deviceInfo.AP_NUM = data.OrgCode +  filterMac(deviceInfo.AP_MAC)
+        deviceInfo.COMPANY_ID = data.OrgCode
+        outArr = append(outArr, deviceInfo)
     }
+
+    jsonString, err := json.Marshal(outArr)
+    if err != nil {
+        return
+    }
+    log.Print(string(jsonString))
+    SaveFile(string(jsonString), "005")
 }
 
 func SaveFile(content string, typeCode string) {
