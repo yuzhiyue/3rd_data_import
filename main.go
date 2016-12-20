@@ -433,8 +433,6 @@ func main() {
         //export.ExportDetectorInfo()
         //export.ExportTrace()
         //return
-        export.ExportDeviceInfo()
-        return;
     }
 
     if len(os.Args) == 3 {
