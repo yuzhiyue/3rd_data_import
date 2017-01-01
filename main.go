@@ -473,8 +473,20 @@ func main() {
 
     log.Println("read dir", dirPath)
 
+    lockFileName := dirPath + "/" + "import.lock"
+    if _, err := os.Stat(lockFileName); os.IsNotExist(err) {
+        f, err := os.Create(lockFileName)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+        f.Close()
+        defer os.Remove(lockFileName)
+    } else {
+        return
+    }
     for i := 0; i < loopCount; i++{
-            ProcDir(dirPath)
-            time.Sleep(time.Second)
+        ProcDir(dirPath)
+        time.Sleep(time.Second)
     }
 }
