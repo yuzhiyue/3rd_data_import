@@ -349,8 +349,8 @@ func ProcDir(dirPath string)  {
 
         }
 
-        os.MkdirAll("/home/detector/file_bak/" + orgCode, 0755)
-        CopyFile(filePath, "/home/detector/file_bak/" + orgCode + "/" + fileName)
+        os.MkdirAll("/data/file_bak/" + orgCode, 0755)
+        CopyFile(filePath, "/data/file_bak/" + orgCode + "/" + fileName)
         os.Remove(filePath)
     }
 }
