@@ -323,34 +323,36 @@ func ProcDir(dirPath string)  {
     for _, fileName := range files {
         log.Println("start proc", fileName)
         filePath := dirPath + PthSep + fileName
-        zipFile := data_file.DataFile{}
-        err := zipFile.Load(filePath)
-        if err != nil {
-            log.Println(err)
-            os.Remove(filePath)
-            continue
-        }
-        fileNameSplited := strings.Split(fileName, "-")
-        if len(fileNameSplited) < 2 {
-            log.Println("fileNameSplited len < 2", fileName)
-            os.Remove(filePath)
-            continue
-        }
-        orgCode := fileNameSplited[1]
+        if strings.HasPrefix(fileName, "145") {
+            zipFile := data_file.DataFile{}
+            err := zipFile.Load(filePath)
+            if err != nil {
+                log.Println(err)
+                os.Remove(filePath)
+                continue
+            }
+            fileNameSplited := strings.Split(fileName, "-")
+            if len(fileNameSplited) < 2 {
+                log.Println("fileNameSplited len < 2", fileName)
+                os.Remove(filePath)
+                continue
+            }
+            orgCode := fileNameSplited[1]
 
-        for _, bcpFile := range zipFile.BCPFiles {
-            log.Println("parse", fileName, bcpFile.Meta.FileName, orgCode)
-            //PrintData(bcpFile.Fields)
-            // PrintData(bcpFile.KeyFields)
-            SaveRawData(&bcpFile)
-            if orgCode == "555400905" || orgCode == "779852855" || orgCode == "723005104"{
-                ProcContent(orgCode, &bcpFile)
+            for _, bcpFile := range zipFile.BCPFiles {
+                log.Println("parse", fileName, bcpFile.Meta.FileName, orgCode)
+                //PrintData(bcpFile.Fields)
+                // PrintData(bcpFile.KeyFields)
+                SaveRawData(&bcpFile)
+                if orgCode == "555400905" || orgCode == "779852855" || orgCode == "723005104"{
+                    ProcContent(orgCode, &bcpFile)
+                }
+
             }
 
+            os.MkdirAll("/data/file_bak/" + orgCode, 0755)
+            CopyFile(filePath, "/data/file_bak/" + orgCode + "/" + fileName)
         }
-
-        os.MkdirAll("/data/file_bak/" + orgCode, 0755)
-        CopyFile(filePath, "/data/file_bak/" + orgCode + "/" + fileName)
         os.Remove(filePath)
     }
 }
