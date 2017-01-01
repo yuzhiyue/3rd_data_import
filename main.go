@@ -343,7 +343,7 @@ func ProcDir(dirPath string)  {
             //PrintData(bcpFile.Fields)
             // PrintData(bcpFile.KeyFields)
             SaveRawData(&bcpFile)
-            if orgCode == "555400905" || orgCode == "779852855"{
+            if orgCode == "555400905" || orgCode == "779852855" || orgCode == "723005104"{
                 ProcContent(orgCode, &bcpFile)
             }
 
