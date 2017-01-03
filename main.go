@@ -367,12 +367,12 @@ func ProcContent(orgCode string, bcpFile * data_file.BCPFile)  {
     }else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0002") {
         SaveBehaviorLog(orgCode, bcpFile.Fields)
     } else if strings.Contains(bcpFile.Meta.FileName, "WA_SOURCE_FJ_0003") {
-        if orgCode != "555400905" {
+        if orgCode != "555400905"  {
             return
         }
         SaveVirtualID(orgCode, bcpFile.KeyFields)
     } else if strings.Contains(bcpFile.Meta.FileName, "WA_BASIC_FJ_0001"){
-        if orgCode != "555400905" {
+        if orgCode != "555400905" && orgCode != "723005104" {
             return
         }
         data_import.SaveServiceInfo(bcpFile)
